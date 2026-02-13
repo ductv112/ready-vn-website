@@ -1,567 +1,403 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đội bóng Ready</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Poppins', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            overflow-x: hidden;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        /* Color Palette: Modern Football Theme - Green, Blue, White */
-        :root {
-            --primary-green: #28a745;
-            --secondary-blue: #007bff;
-            --accent-red: #dc3545;
-            --bg-light: #f8f9ff;
-            --text-dark: #2c3e50;
-            --white: #ffffff;
-            --shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        /* Header */
-        header {
-            background: linear-gradient(135deg, rgba(40, 167, 69, 0.95), rgba(0, 123, 255, 0.95));
-            color: var(--white);
-            padding: 1rem 0;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow);
-        }
-        header.scrolled {
-            backdrop-filter: blur(20px);
-            transform: translateY(-5px);
-        }
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo {
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(45deg, var(--white), #ffd700);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-family: 'Orbitron', sans-serif;
-        }
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-        .nav-links a {
-            color: var(--white);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--white);
-            transition: width 0.3s ease;
-        }
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-        .nav-links a:hover {
-            color: #ffd700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-        }
-        .hamburger {
-            display: none;
-            flex-direction: column;
-            cursor: pointer;
-        }
-        .hamburger span {
-            width: 25px;
-            height: 3px;
-            background: var(--white);
-            margin: 3px 0;
-            transition: 0.3s;
-            border-radius: 3px;
-        }
-        /* Hero Section */
-        #hero {
-            background: linear-gradient(rgba(40, 167, 69, 0.7), rgba(0, 123, 255, 0.5)), url('https://images.unsplash.com/photo-1552673594-d31ce3e35f8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80') center/cover;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: var(--white);
-            position: relative;
-        }
-        #hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 4s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.05); }
-        }
-        .hero-content h1 {
-            font-size: 5rem;
-            margin-bottom: 1rem;
-            font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            animation: fadeInUp 1s ease;
-            font-family: 'Orbitron', sans-serif;
-        }
-        .hero-content p {
-            font-size: 1.8rem;
-            margin-bottom: 2rem;
-            animation: fadeInUp 1s ease 0.2s both;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-        .cta-btn {
-            display: inline-block;
-            background: linear-gradient(45deg, var(--accent-red), var(--primary-green));
-            color: var(--white);
-            padding: 1.2rem 3rem;
-            text-decoration: none;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            animation: fadeInUp 1s ease 0.4s both;
-            font-weight: 600;
-            box-shadow: var(--shadow);
-        }
-        .cta-btn:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 15px 40px rgba(220, 53, 69, 0.4);
-        }
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        /* Sections */
-        section {
-            padding: 6rem 0;
-        }
-        h2 {
-            text-align: center;
-            font-size: 3rem;
-            margin-bottom: 3rem;
-            color: var(--primary-green);
-            font-family: 'Orbitron', sans-serif;
-            position: relative;
-        }
-        h2::after {
-            content: '';
-            display: block;
-            width: 80px;
-            height: 4px;
-            background: linear-gradient(45deg, var(--secondary-blue), var(--accent-red));
-            margin: 1rem auto;
-            border-radius: 2px;
-        }
-        /* About */
-        #about {
-            background: linear-gradient(135deg, var(--bg-light), #e9f5ff);
-        }
-        .about-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            align-items: center;
-        }
-        .about-text p {
-            font-size: 1.2rem;
-            margin-bottom: 1.5rem;
-            text-align: justify;
-        }
-        .about-image {
-            text-align: center;
-            position: relative;
-        }
-        .about-image img {
-            width: 100%;
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease;
-        }
-        .about-image:hover img {
-            transform: scale(1.05);
-        }
-        /* Team */
-        #team {
-            background: var(--white);
-        }
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-        }
-        .team-member {
-            text-align: center;
-            padding: 2.5rem;
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            background: linear-gradient(145deg, #ffffff, #f0f8ff);
-            border: 1px solid rgba(40, 167, 69, 0.1);
-        }
-        .team-member:hover {
-            transform: translateY(-15px) rotate(1deg);
-            box-shadow: 0 20px 50px rgba(40, 167, 69, 0.2);
-        }
-        .team-member img {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            margin-bottom: 1rem;
-            object-fit: cover;
-            border: 4px solid var(--primary-green);
-        }
-        .team-member h3 {
-            color: var(--primary-green);
-            margin-bottom: 0.5rem;
-            font-family: 'Orbitron', sans-serif;
-        }
-        /* Events */
-        #events {
-            background: linear-gradient(135deg, #e9f5ff, var(--bg-light));
-        }
-        .events-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2rem;
-        }
-        .event-card {
-            background: var(--white);
-            padding: 2.5rem;
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .event-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, var(--secondary-blue), var(--accent-red));
-        }
-        .event-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 123, 255, 0.2);
-        }
-        .event-date {
-            background: linear-gradient(45deg, var(--primary-green), var(--secondary-blue));
-            color: var(--white);
-            padding: 0.8rem 1.5rem;
-            border-radius: 50px;
-            display: inline-block;
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-        /* Contact */
-        #contact {
-            background: var(--white);
-        }
-        .contact-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-        }
-        .contact-info div {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2rem;
-            gap: 1rem;
-        }
-        .contact-info i {
-            font-size: 2.5rem;
-            color: var(--secondary-blue);
-            width: 60px;
-            text-align: center;
-        }
-        .contact-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        .contact-form input,
-        .contact-form textarea {
-            padding: 1.2rem;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            font-family: inherit;
-            transition: border-color 0.3s ease;
-        }
-        .contact-form input:focus,
-        .contact-form textarea:focus {
-            outline: none;
-            border-color: var(--primary-green);
-        }
-        .contact-form button {
-            background: linear-gradient(45deg, var(--primary-green), var(--secondary-blue));
-            color: var(--white);
-            padding: 1.2rem;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-        .contact-form button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-        /* Footer */
-        footer {
-            background: linear-gradient(135deg, var(--text-dark), #34495e);
-            color: var(--white);
-            text-align: center;
-            padding: 3rem 0;
-        }
-        footer a {
-            color: #ffd700;
-            text-decoration: none;
-        }
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                width: 100%;
-                background: rgba(40, 167, 69, 0.95);
-                flex-direction: column;
-                padding: 1rem;
-            }
-            .nav-links.active {
-                display: flex;
-            }
-            .hamburger {
-                display: flex;
-            }
-            .hero-content h1 {
-                font-size: 3rem;
-            }
-            .hero-content p {
-                font-size: 1.2rem;
-            }
-            .about-content,
-            .contact-content {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-            h2 {
-                font-size: 2.5rem;
-            }
-        }
-    </style>
+    <meta name="description" content="Ready.vn - Đội bóng trẻ trung, đầy nhiệt huyết tại TP.HCM. Sẵn sàng chinh phục mọi thử thách trên sân cỏ xanh!">
+    <meta name="keywords" content="Ready.vn, đội bóng, bóng đá, TP.HCM, football, sân cỏ">
+    <meta name="author" content="Ready.vn">
+
+    <title>Ready.vn — Đội Bóng Sẵn Sàng Chiến Thắng</title>
+
+    <!-- Favicon placeholder -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- AOS - Animate on Scroll -->
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <nav class="container">
-            <div class="logo">Ready.vn</div>
-            <ul class="nav-links">
-                <li><a href="#hero">Trang Chủ</a></li>
-                <li><a href="#about">Giới Thiệu</a></li>
-                <li><a href="#team">Đội Ngũ</a></li>
-                <li><a href="#events">Sự Kiện</a></li>
-                <li><a href="#contact">Liên Hệ</a></li>
+
+    <!-- Loading Screen -->
+    <div class="loading-screen" aria-hidden="true">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="brand">READY.VN</div>
+        </div>
+    </div>
+
+    <!-- ==================== HEADER ==================== -->
+    <header role="banner">
+        <nav class="container" aria-label="Main navigation">
+            <a href="#hero" class="logo" aria-label="Ready.vn - Trang chủ">Ready.vn</a>
+            <ul class="nav-links" role="menubar">
+                <li role="none"><a href="#hero" role="menuitem">Trang Chủ</a></li>
+                <li role="none"><a href="#about" role="menuitem">Giới Thiệu</a></li>
+                <li role="none"><a href="#team" role="menuitem">Đội Ngũ</a></li>
+                <li role="none"><a href="#achievements" role="menuitem">Thành Tích</a></li>
+                <li role="none"><a href="#events" role="menuitem">Sự Kiện</a></li>
+                <li role="none"><a href="#gallery" role="menuitem">Thư Viện</a></li>
+                <li role="none"><a href="#contact" role="menuitem">Liên Hệ</a></li>
             </ul>
-            <div class="hamburger">
+            <button class="hamburger" aria-label="Mở menu" aria-expanded="false">
                 <span></span>
                 <span></span>
                 <span></span>
-            </div>
+            </button>
         </nav>
     </header>
 
-    <section id="hero">
+    <!-- ==================== HERO ==================== -->
+    <section id="hero" aria-label="Banner chính">
         <div class="hero-content container">
             <h1 data-aos="fade-up">Ready.vn</h1>
-            <p data-aos="fade-up" data-aos-delay="200">Đội bóng trẻ trung, đầy nhiệt huyết, sẵn sàng chinh phục mọi thử thách trên sân cỏ xanh!</p>
-            <a href="#about" class="cta-btn" data-aos="fade-up" data-aos-delay="400">Khám Phá Ngay</a>
+            <p data-aos="fade-up" data-aos-delay="200">
+                Đội bóng trẻ trung, đầy nhiệt huyết,<br>
+                sẵn sàng chinh phục mọi thử thách trên sân cỏ xanh!
+            </p>
+            <a href="#about" class="cta-btn" data-aos="fade-up" data-aos-delay="400">
+                <i class="fas fa-futbol"></i> Khám Phá Ngay
+            </a>
         </div>
+        <a href="#about" class="hero-scroll" aria-label="Cuộn xuống">
+            <i class="fas fa-chevron-down"></i>
+        </a>
     </section>
 
-    <section id="about" data-aos="fade-up">
+    <!-- ==================== ABOUT ==================== -->
+    <section id="about" aria-label="Giới thiệu về Ready.vn">
         <div class="container">
-            <h2>Giới Thiệu Về Ready.vn</h2>
+            <h2 class="section-title" data-aos="fade-up">Giới Thiệu Về Ready.vn</h2>
+            <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                Nơi đam mê bóng đá kết nối những trái tim
+            </p>
+
             <div class="about-content">
-                <div class="about-text">
-                    <p>Ready.vn là đội bóng được thành lập với sứ mệnh mang đến những trận đấu đỉnh cao, tinh thần đồng đội và niềm vui thể thao cho cộng đồng. Chúng tôi không chỉ chơi bóng, mà còn xây dựng một gia đình lớn yêu bóng đá.</p>
-                    <p>Với hơn 20 thành viên tài năng, đội đã tham gia nhiều giải đấu địa phương tại TP.HCM, và đang hướng tới các sân chơi lớn hơn. Theo dõi fanpage Facebook để cập nhật tin tức mới nhất!</p>
+                <div class="about-text" data-aos="fade-right">
+                    <p>
+                        Ready.vn là đội bóng được thành lập với sứ mệnh mang đến những trận đấu đỉnh cao,
+                        tinh thần đồng đội và niềm vui thể thao cho cộng đồng. Chúng tôi không chỉ chơi bóng,
+                        mà còn xây dựng một gia đình lớn yêu bóng đá.
+                    </p>
+                    <p>
+                        Với hơn 20 thành viên tài năng, đội đã tham gia nhiều giải đấu địa phương tại TP.HCM,
+                        và đang hướng tới các sân chơi lớn hơn. Theo dõi fanpage Facebook để cập nhật tin tức
+                        mới nhất!
+                    </p>
+
+                    <!-- Quick stats -->
+                    <div class="about-stats">
+                        <div class="stat-item">
+                            <div class="stat-number" data-target="20">0+</div>
+                            <div class="stat-label">Thành Viên</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" data-target="50">0+</div>
+                            <div class="stat-label">Trận Đấu</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" data-target="10">0+</div>
+                            <div class="stat-label">Giải Đấu</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="about-image">
-                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Đội bóng Ready.vn">
+                <div class="about-image" data-aos="fade-left">
+                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                         alt="Đội bóng Ready.vn tập luyện trên sân cỏ"
+                         loading="lazy">
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="team" data-aos="fade-up">
+    <!-- ==================== TEAM ==================== -->
+    <section id="team" aria-label="Đội ngũ thành viên">
         <div class="container">
-            <h2>Đội Ngũ Của Chúng Tôi</h2>
+            <h2 class="section-title" data-aos="fade-up">Đội Ngũ Của Chúng Tôi</h2>
+            <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                Những cầu thủ tài năng và đầy nhiệt huyết
+            </p>
+
             <div class="team-grid">
                 <div class="team-member" data-aos="zoom-in" data-aos-delay="100">
-                    <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Thành viên 1">
+                    <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80"
+                         alt="Nguyễn Văn A - Tiền Đạo" loading="lazy">
                     <h3>Nguyễn Văn A</h3>
-                    <p><i class="fas fa-futbol"></i> Tiền Đạo</p>
+                    <p class="position"><i class="fas fa-futbol"></i> Tiền Đạo</p>
                 </div>
                 <div class="team-member" data-aos="zoom-in" data-aos-delay="200">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Thành viên 2">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80"
+                         alt="Trần Thị B - Hậu Vệ" loading="lazy">
                     <h3>Trần Thị B</h3>
-                    <p><i class="fas fa-shield-alt"></i> Hậu Vệ</p>
+                    <p class="position"><i class="fas fa-shield-alt"></i> Hậu Vệ</p>
                 </div>
                 <div class="team-member" data-aos="zoom-in" data-aos-delay="300">
-                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Thành viên 3">
+                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80"
+                         alt="Lê Văn C - Thủ Môn" loading="lazy">
                     <h3>Lê Văn C</h3>
-                    <p><i class="fas fa-hand-stop"></i> Thủ Môn</p>
+                    <p class="position"><i class="fas fa-hand-paper"></i> Thủ Môn</p>
                 </div>
                 <div class="team-member" data-aos="zoom-in" data-aos-delay="400">
-                    <img src="https://images.unsplash.com/photo-1508186225823-0963cf9f9f69?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80" alt="Thành viên 4">
+                    <img src="https://images.unsplash.com/photo-1508186225823-0963cf9f9f69?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80"
+                         alt="Phạm Thị D - Tiền Vệ" loading="lazy">
                     <h3>Phạm Thị D</h3>
-                    <p><i class="fas fa-running"></i> Tiền Vệ</p>
+                    <p class="position"><i class="fas fa-running"></i> Tiền Vệ</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="events" data-aos="fade-up">
+    <!-- ==================== ACHIEVEMENTS ==================== -->
+    <section id="achievements" aria-label="Thành tích đội bóng">
         <div class="container">
-            <h2>Sự Kiện Sắp Tới</h2>
+            <h2 class="section-title" data-aos="fade-up">Thành Tích Nổi Bật</h2>
+            <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                Những dấu ấn trên hành trình chinh phục
+            </p>
+
+            <div class="achievements-grid">
+                <div class="achievement-card" data-aos="fade-up" data-aos-delay="100">
+                    <i class="fas fa-trophy achievement-icon gold"></i>
+                    <h3>Vô Địch Giải Phong Trào</h3>
+                    <div class="year">2025</div>
+                    <p>Giành chức vô địch giải bóng đá phong trào khu vực Quận 7, TP.HCM</p>
+                </div>
+                <div class="achievement-card" data-aos="fade-up" data-aos-delay="200">
+                    <i class="fas fa-medal achievement-icon green"></i>
+                    <h3>Á Quân League Cup</h3>
+                    <div class="year">2025</div>
+                    <p>Lọt vào chung kết giải League Cup miền Nam với thành tích ấn tượng</p>
+                </div>
+                <div class="achievement-card" data-aos="fade-up" data-aos-delay="300">
+                    <i class="fas fa-star achievement-icon blue"></i>
+                    <h3>Đội Hình Fair Play</h3>
+                    <div class="year">2024</div>
+                    <p>Được vinh danh đội bóng Fair Play xuất sắc nhất giải đấu mùa Hè</p>
+                </div>
+                <div class="achievement-card" data-aos="fade-up" data-aos-delay="400">
+                    <i class="fas fa-users achievement-icon red"></i>
+                    <h3>Cộng Đồng Yêu Thể Thao</h3>
+                    <div class="year">2024</div>
+                    <p>Xây dựng cộng đồng với hơn 500 thành viên yêu thích bóng đá phong trào</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== EVENTS ==================== -->
+    <section id="events" aria-label="Sự kiện sắp tới">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up">Sự Kiện Sắp Tới</h2>
+            <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                Đừng bỏ lỡ những trận đấu hấp dẫn
+            </p>
+
             <div class="events-grid">
                 <div class="event-card" data-aos="flip-left">
-                    <div class="event-date">12/10/2025</div>
+                    <div class="event-date">
+                        <i class="fas fa-calendar-alt"></i> 12/10/2025
+                    </div>
                     <h3>Trận Giao Hữu Tại Sân Thành Phát</h3>
-                    <p>Thời gian: 7h30 sáng Chủ Nhật. Địa điểm: Sân Thành Phát, TP.HCM. Tiếp đón cựu trung vệ thép Lê Đoàn sau thời gian dài vắng bóng. Mời anh em tham gia cổ vũ!</p>
-                    <i class="fas fa-calendar-alt" style="color: var(--primary-green); font-size: 4rem; margin-top: 1rem; display: block;"></i>
+                    <p>
+                        Thời gian: 7h30 sáng Chủ Nhật. Địa điểm: Sân Thành Phát, TP.HCM.
+                        Tiếp đón cựu trung vệ thép Lê Đoàn sau thời gian dài vắng bóng.
+                        Mời anh em tham gia cổ vũ!
+                    </p>
+                    <i class="fas fa-calendar-check event-icon" style="color: var(--primary-green);" aria-hidden="true"></i>
                 </div>
                 <div class="event-card" data-aos="flip-left" data-aos-delay="200">
-                    <div class="event-date">19/10/2025</div>
+                    <div class="event-date">
+                        <i class="fas fa-calendar-alt"></i> 19/10/2025
+                    </div>
                     <h3>Giải Đấu Hè Vui</h3>
-                    <p>Trận đấu giao hữu với các đội bạn tại Sân Cỏ Trung Tâm. Cơ hội để anh em Ready.vn thể hiện phong độ đỉnh cao.</p>
-                    <i class="fas fa-trophy" style="color: var(--accent-red); font-size: 4rem; margin-top: 1rem; display: block;"></i>
+                    <p>
+                        Trận đấu giao hữu với các đội bạn tại Sân Cỏ Trung Tâm.
+                        Cơ hội để anh em Ready.vn thể hiện phong độ đỉnh cao.
+                    </p>
+                    <i class="fas fa-trophy event-icon" style="color: var(--accent-gold);" aria-hidden="true"></i>
                 </div>
                 <div class="event-card" data-aos="flip-left" data-aos-delay="400">
-                    <div class="event-date">26/10/2025</div>
+                    <div class="event-date">
+                        <i class="fas fa-calendar-alt"></i> 26/10/2025
+                    </div>
                     <h3>League Pro Vòng Loại</h3>
-                    <p>Vòng loại giải đấu chuyên nghiệp khu vực miền Nam. Ready.vn sẵn sàng bùng nổ!</p>
-                    <i class="fas fa-fire" style="color: var(--secondary-blue); font-size: 4rem; margin-top: 1rem; display: block;"></i>
+                    <p>
+                        Vòng loại giải đấu chuyên nghiệp khu vực miền Nam.
+                        Ready.vn sẵn sàng bùng nổ!
+                    </p>
+                    <i class="fas fa-fire event-icon" style="color: var(--accent-red);" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="contact" data-aos="fade-up">
+    <!-- ==================== GALLERY ==================== -->
+    <section id="gallery" aria-label="Thư viện ảnh">
         <div class="container">
-            <h2>Liên Hệ Với Chúng Tôi</h2>
-            <div class="contact-content">
-                <div class="contact-info">
-                    <div><i class="fas fa-map-marker-alt"></i><p>Đội bóng Ready</p></div>
-                    <div><i class="fas fa-phone"></i><p>03969 11286</p></div>
-                    <div><i class="fas fa-envelope"></i><p>ductv112@gmail.com</p></div>
-                    <div><i class="fab fa-facebook"></i><p><a href="https://www.facebook.com/groups/880013402123211" target="_blank">facebook.com/groups/readyvn</a></p></div>
+            <h2 class="section-title" data-aos="fade-up">Thư Viện Ảnh</h2>
+            <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                Những khoảnh khắc đáng nhớ trên sân cỏ
+            </p>
+
+            <div class="gallery-grid">
+                <div class="gallery-item" data-aos="fade-up" data-aos-delay="100">
+                    <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                         alt="Khoảnh khắc trên sân cỏ" loading="lazy">
+                    <div class="gallery-overlay">
+                        <p>Trận đấu giao hữu</p>
+                    </div>
                 </div>
-                <form class="contact-form">
-                    <input type="text" placeholder="Tên của bạn" required>
-                    <input type="email" placeholder="Email" required>
-                    <textarea rows="5" placeholder="Tin nhắn của bạn" required></textarea>
-                    <button type="submit">Gửi Tin Nhắn</button>
+                <div class="gallery-item" data-aos="fade-up" data-aos-delay="200">
+                    <img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                         alt="Đội bóng tập luyện" loading="lazy">
+                    <div class="gallery-overlay">
+                        <p>Buổi tập luyện</p>
+                    </div>
+                </div>
+                <div class="gallery-item" data-aos="fade-up" data-aos-delay="300">
+                    <img src="https://images.unsplash.com/photo-1551958219-acbc608c6377?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                         alt="Chiến thắng của đội" loading="lazy">
+                    <div class="gallery-overlay">
+                        <p>Khoảnh khắc chiến thắng</p>
+                    </div>
+                </div>
+                <div class="gallery-item" data-aos="fade-up" data-aos-delay="400">
+                    <img src="https://images.unsplash.com/photo-1529900748604-07564a03e7a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                         alt="Tinh thần đồng đội" loading="lazy">
+                    <div class="gallery-overlay">
+                        <p>Tinh thần đồng đội</p>
+                    </div>
+                </div>
+                <div class="gallery-item" data-aos="fade-up" data-aos-delay="500">
+                    <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                         alt="Sân cỏ xanh" loading="lazy">
+                    <div class="gallery-overlay">
+                        <p>Sân cỏ xanh</p>
+                    </div>
+                </div>
+                <div class="gallery-item" data-aos="fade-up" data-aos-delay="600">
+                    <img src="https://images.unsplash.com/photo-1560272564-c83b66b1ad12?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                         alt="Giải đấu phong trào" loading="lazy">
+                    <div class="gallery-overlay">
+                        <p>Giải đấu phong trào</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CONTACT ==================== -->
+    <section id="contact" aria-label="Liên hệ">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up">Liên Hệ Với Chúng Tôi</h2>
+            <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                Bạn muốn tham gia? Hãy liên hệ ngay!
+            </p>
+
+            <div class="contact-content">
+                <div class="contact-info" data-aos="fade-right">
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                        <p>Đội bóng Ready — TP. Hồ Chí Minh</p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone" aria-hidden="true"></i>
+                        <p><a href="tel:0396911286">03969 11286</a></p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        <p><a href="mailto:ductv112@gmail.com">ductv112@gmail.com</a></p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fab fa-facebook" aria-hidden="true"></i>
+                        <p>
+                            <a href="https://www.facebook.com/groups/880013402123211"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                Facebook Group Ready.vn
+                            </a>
+                        </p>
+                    </div>
+                </div>
+                <form class="contact-form" data-aos="fade-left" aria-label="Form liên hệ">
+                    <input type="text" placeholder="Tên của bạn" required aria-label="Tên">
+                    <input type="email" placeholder="Email" required aria-label="Email">
+                    <textarea rows="5" placeholder="Tin nhắn của bạn" required aria-label="Tin nhắn"></textarea>
+                    <button type="submit">
+                        <i class="fas fa-paper-plane"></i> Gửi Tin Nhắn
+                    </button>
                 </form>
             </div>
         </div>
     </section>
 
-    <footer>
+    <!-- ==================== FOOTER ==================== -->
+    <footer role="contentinfo">
         <div class="container">
-            <p>&copy; 2025 Ready.vn. Tất cả quyền được bảo lưu. | <a href="#">Chính Sách Bảo Mật</a> | Theo dõi chúng tôi trên <i class="fab fa-facebook"></i> Facebook</p>
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="logo">Ready.vn</div>
+                    <p>
+                        Đội bóng trẻ trung, đầy nhiệt huyết tại TP.HCM.
+                        Sẵn sàng chinh phục mọi thử thách trên sân cỏ xanh!
+                    </p>
+                </div>
+                <div class="footer-links">
+                    <h4>Liên Kết</h4>
+                    <ul>
+                        <li><a href="#about">Giới Thiệu</a></li>
+                        <li><a href="#team">Đội Ngũ</a></li>
+                        <li><a href="#achievements">Thành Tích</a></li>
+                        <li><a href="#events">Sự Kiện</a></li>
+                        <li><a href="#contact">Liên Hệ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-social">
+                    <h4>Theo Dõi</h4>
+                    <div class="social-icons">
+                        <a href="https://www.facebook.com/groups/880013402123211"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="social-icon facebook"
+                           aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-icon youtube" aria-label="YouTube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                        <a href="#" class="social-icon instagram" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-icon tiktok" aria-label="TikTok">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Ready.vn. Tất cả quyền được bảo lưu. | <a href="#">Chính Sách Bảo Mật</a></p>
+            </div>
         </div>
     </footer>
 
+    <!-- Back to Top Button -->
+    <button class="back-to-top" aria-label="Quay lại đầu trang">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- Scripts -->
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-    <script>
-        AOS.init({
-            duration: 1200,
-            once: true,
-            offset: 100
-        });
+    <script src="js/main.js"></script>
 
-        // Header scroll effect
-        window.addEventListener('scroll', () => {
-            const header = document.querySelector('header');
-            header.classList.toggle('scrolled', window.scrollY > 100);
-        });
-
-        // Mobile menu
-        const hamburger = document.querySelector('.hamburger');
-        const navLinks = document.querySelector('.nav-links');
-        hamburger.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-            hamburger.classList.toggle('active');
-        });
-
-        // Form submission
-        document.querySelector('.contact-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert('Cảm ơn bạn! Tin nhắn đã được gửi thành công. Chúng tôi sẽ liên hệ sớm!');
-        });
-
-        // Smooth scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            });
-        });
-
-        // Parallax effect for hero (simple)
-        window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
-            const hero = document.getElementById('hero');
-            hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-        });
-    </script>
 </body>
-
 </html>
-
