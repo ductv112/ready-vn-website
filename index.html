@@ -4,36 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Ready - Đội bóng anh em từ 2012. Sân 7 Hà Nội. Sẵn sàng từ 2012.">
-    <meta name="theme-color" content="#1a1a2e">
+    <meta name="theme-color" content="#12122b">
     <title>READY — Sẵn Sàng Từ 2012</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
 
-    <!-- Phosphor Icons (lightweight) -->
+    <!-- Phosphor Icons -->
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css">
 
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <!-- ===================== NAVBAR ===================== -->
-    <nav class="navbar" id="navbar" aria-label="Main navigation">
+    <nav class="navbar" id="navbar">
         <div class="navbar__container">
-            <a href="#" class="navbar__logo" aria-label="Ready - Trang chủ">
+            <a href="#" class="navbar__logo">
                 <span class="navbar__logo-text">READY</span>
             </a>
-            <button class="navbar__toggle" id="navToggle" aria-label="Mở menu" aria-expanded="false">
+            <button class="navbar__toggle" id="navToggle" aria-label="Mở menu">
                 <span class="navbar__toggle-bar"></span>
                 <span class="navbar__toggle-bar"></span>
                 <span class="navbar__toggle-bar"></span>
             </button>
-            <ul class="navbar__menu" id="navMenu" role="menubar">
-                <li role="none"><a href="#story" class="navbar__link" role="menuitem">Câu Chuyện</a></li>
-                <li role="none"><a href="#brothers" class="navbar__link" role="menuitem">Anh Em</a></li>
-                <li role="none"><a href="#moments" class="navbar__link" role="menuitem">Khoảnh Khắc</a></li>
-                <li role="none"><a href="#contact" class="navbar__link" role="menuitem">Liên Hệ</a></li>
+            <ul class="navbar__menu" id="navMenu">
+                <li><a href="#story" class="navbar__link">Câu Chuyện</a></li>
+                <li><a href="#brothers" class="navbar__link">Anh Em</a></li>
+                <li><a href="#moments" class="navbar__link">Khoảnh Khắc</a></li>
+                <li><a href="#contact" class="navbar__link">Liên Hệ</a></li>
             </ul>
         </div>
     </nav>
@@ -41,10 +41,7 @@
     <!-- ===================== HERO ===================== -->
     <section class="hero" id="hero">
         <div class="hero__bg">
-            <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1920&q=80" 
-                 alt="Sân bóng đá" 
-                 class="hero__bg-img" 
-                 loading="eager">
+            <img src="r-image/anhbia.jpg" alt="Ready Team" class="hero__bg-img">
         </div>
         <div class="hero__overlay"></div>
         <div class="hero__content">
@@ -62,10 +59,8 @@
                 <i class="ph ph-arrow-down"></i>
             </a>
         </div>
-        <div class="hero__scroll-indicator" aria-hidden="true">
-            <div class="hero__scroll-mouse">
-                <div class="hero__scroll-wheel"></div>
-            </div>
+        <div class="hero__scroll-indicator">
+            <div class="hero__scroll-mouse"><div class="hero__scroll-wheel"></div></div>
         </div>
     </section>
 
@@ -80,9 +75,7 @@
             <div class="story__content">
                 <div class="story__block" data-animate="fade-right">
                     <div class="story__image">
-                        <img src="https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80" 
-                             alt="Anh em đá bóng" 
-                             loading="lazy">
+                        <img src="r-image/1.jpg" alt="Anh em đá bóng">
                     </div>
                 </div>
                 <div class="story__block story__block--text" data-animate="fade-left">
@@ -92,39 +85,6 @@
                     <p class="story__text">
                         Hơn một thập kỷ gắn bó, cùng nhau ra sân mỗi tuần, cùng nhau chia sẻ niềm vui trên sân 7 người. Không phải chuyên nghiệp, không cần thành tích — chỉ cần anh em và trái bóng.
                     </p>
-                </div>
-            </div>
-
-            <!-- Timeline -->
-            <div class="timeline" data-animate="fade-up">
-                <div class="timeline__line" aria-hidden="true"></div>
-                <div class="timeline__item">
-                    <div class="timeline__dot"></div>
-                    <div class="timeline__content">
-                        <span class="timeline__year">2012</span>
-                        <p class="timeline__desc">Thành lập — nhóm anh em đầu tiên rủ nhau ra sân</p>
-                    </div>
-                </div>
-                <div class="timeline__item">
-                    <div class="timeline__dot"></div>
-                    <div class="timeline__content">
-                        <span class="timeline__year">2015</span>
-                        <p class="timeline__desc">Đội hình mở rộng, thêm nhiều anh em mới gia nhập</p>
-                    </div>
-                </div>
-                <div class="timeline__item">
-                    <div class="timeline__dot"></div>
-                    <div class="timeline__content">
-                        <span class="timeline__year">2020</span>
-                        <p class="timeline__desc">Vượt qua đại dịch, vẫn giữ lửa đam mê</p>
-                    </div>
-                </div>
-                <div class="timeline__item">
-                    <div class="timeline__dot timeline__dot--active"></div>
-                    <div class="timeline__content">
-                        <span class="timeline__year">Hiện tại</span>
-                        <p class="timeline__desc">14+ năm, 20+ anh em, vẫn sẵn sàng mỗi cuối tuần</p>
-                    </div>
                 </div>
             </div>
 
@@ -164,28 +124,22 @@
 
             <div class="brothers__collage" data-animate="fade-up">
                 <div class="brothers__photo brothers__photo--lg">
-                    <img src="https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?w=600&q=80" 
-                         alt="Anh em Ready" loading="lazy">
+                    <img src="r-image/2.jpg" alt="Anh em Ready">
                 </div>
                 <div class="brothers__photo brothers__photo--sm">
-                    <img src="https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=400&q=80" 
-                         alt="Trên sân cỏ" loading="lazy">
+                    <img src="r-image/3.jpg" alt="Trên sân cỏ">
                 </div>
                 <div class="brothers__photo brothers__photo--md">
-                    <img src="https://images.unsplash.com/photo-1552667466-07770ae110d0?w=500&q=80" 
-                         alt="Đá bóng cùng nhau" loading="lazy">
+                    <img src="r-image/4.jpg" alt="Đá bóng cùng nhau">
                 </div>
                 <div class="brothers__photo brothers__photo--sm">
-                    <img src="https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=400&q=80" 
-                         alt="Khoảnh khắc vui vẻ" loading="lazy">
+                    <img src="r-image/5.jpg" alt="Khoảnh khắc vui vẻ">
                 </div>
                 <div class="brothers__photo brothers__photo--md">
-                    <img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=500&q=80" 
-                         alt="Sân bóng" loading="lazy">
+                    <img src="r-image/6.jpg" alt="Sân bóng">
                 </div>
                 <div class="brothers__photo brothers__photo--lg">
-                    <img src="https://images.unsplash.com/photo-1551958219-acbc608c6377?w=600&q=80" 
-                         alt="Tinh thần đồng đội" loading="lazy">
+                    <img src="r-image/7.jpg" alt="Tinh thần đồng đội">
                 </div>
             </div>
 
@@ -205,60 +159,36 @@
 
             <div class="gallery" data-animate="fade-up">
                 <div class="gallery__item gallery__item--wide">
-                    <img src="https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=800&q=80" 
-                         alt="Trận đấu" loading="lazy">
-                    <div class="gallery__overlay">
-                        <span class="gallery__caption">Những trận cầu nảy lửa</span>
-                    </div>
+                    <img src="r-image/8.jpg" alt="Trận đấu">
+                    <div class="gallery__overlay"><span class="gallery__caption">Những trận cầu nảy lửa</span></div>
                 </div>
                 <div class="gallery__item">
-                    <img src="https://images.unsplash.com/photo-1518604666860-9ed391f76460?w=500&q=80" 
-                         alt="Ăn mừng bàn thắng" loading="lazy">
-                    <div class="gallery__overlay">
-                        <span class="gallery__caption">Bàn thắng & ăn mừng</span>
-                    </div>
+                    <img src="r-image/9.jpg" alt="Ăn mừng bàn thắng">
+                    <div class="gallery__overlay"><span class="gallery__caption">Bàn thắng & ăn mừng</span></div>
                 </div>
                 <div class="gallery__item">
-                    <img src="https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=500&q=80" 
-                         alt="Sân cỏ xanh" loading="lazy">
-                    <div class="gallery__overlay">
-                        <span class="gallery__caption">Sân cỏ — nhà thứ hai</span>
-                    </div>
+                    <img src="r-image/10.jpg" alt="Sân cỏ xanh">
+                    <div class="gallery__overlay"><span class="gallery__caption">Sân cỏ — nhà thứ hai</span></div>
                 </div>
                 <div class="gallery__item gallery__item--tall">
-                    <img src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=500&q=80" 
-                         alt="Trái bóng" loading="lazy">
-                    <div class="gallery__overlay">
-                        <span class="gallery__caption">Trái bóng gắn kết</span>
-                    </div>
+                    <img src="r-image/11.jpg" alt="Trái bóng">
+                    <div class="gallery__overlay"><span class="gallery__caption">Trái bóng gắn kết</span></div>
                 </div>
                 <div class="gallery__item">
-                    <img src="https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=500&q=80" 
-                         alt="Anh em trên sân" loading="lazy">
-                    <div class="gallery__overlay">
-                        <span class="gallery__caption">Tinh thần anh em</span>
-                    </div>
+                    <img src="r-image/12.jpg" alt="Anh em trên sân">
+                    <div class="gallery__overlay"><span class="gallery__caption">Tinh thần anh em</span></div>
                 </div>
                 <div class="gallery__item gallery__item--wide">
-                    <img src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80" 
-                         alt="Sân bóng chiều tà" loading="lazy">
-                    <div class="gallery__overlay">
-                        <span class="gallery__caption">Chiều cuối tuần trên sân</span>
-                    </div>
+                    <img src="r-image/13.jpg" alt="Sân bóng chiều tà">
+                    <div class="gallery__overlay"><span class="gallery__caption">Chiều cuối tuần trên sân</span></div>
                 </div>
                 <div class="gallery__item">
-                    <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?w=500&q=80" 
-                         alt="Giày và bóng" loading="lazy">
-                    <div class="gallery__overlay">
-                        <span class="gallery__caption">Luôn sẵn sàng</span>
-                    </div>
+                    <img src="r-image/14.jpg" alt="Giày và bóng">
+                    <div class="gallery__overlay"><span class="gallery__caption">Luôn sẵn sàng</span></div>
                 </div>
                 <div class="gallery__item">
-                    <img src="https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=500&q=80" 
-                         alt="Đồng đội" loading="lazy">
-                    <div class="gallery__overlay">
-                        <span class="gallery__caption">Đồng đội là gia đình</span>
-                    </div>
+                    <img src="r-image/15.jpg" alt="Đồng đội">
+                    <div class="gallery__overlay"><span class="gallery__caption">Đồng đội là gia đình</span></div>
                 </div>
             </div>
         </div>
@@ -272,39 +202,26 @@
                 <h2 class="section-header__title">Muốn Tham Gia<br><span class="text-accent">Cùng Chúng Tôi?</span></h2>
             </header>
 
-            <p class="contact__subtitle" data-animate="fade-up">
-                Bạn yêu bóng đá và muốn tìm một nhóm anh em để cùng ra sân? Liên hệ ngay!
-            </p>
-
             <div class="contact__cards" data-animate="fade-up">
                 <a href="tel:0396911286" class="contact__card">
-                    <div class="contact__card-icon">
-                        <i class="ph ph-phone"></i>
-                    </div>
+                    <div class="contact__card-icon"><i class="ph ph-phone"></i></div>
                     <span class="contact__card-label">Điện thoại</span>
                     <span class="contact__card-value">03969 11286</span>
                 </a>
                 <a href="mailto:ductv112@gmail.com" class="contact__card">
-                    <div class="contact__card-icon">
-                        <i class="ph ph-envelope-simple"></i>
-                    </div>
+                    <div class="contact__card-icon"><i class="ph ph-envelope-simple"></i></div>
                     <span class="contact__card-label">Email</span>
                     <span class="contact__card-value">ductv112@gmail.com</span>
                 </a>
                 <div class="contact__card">
-                    <div class="contact__card-icon">
-                        <i class="ph ph-map-pin"></i>
-                    </div>
+                    <div class="contact__card-icon"><i class="ph ph-map-pin"></i></div>
                     <span class="contact__card-label">Khu vực</span>
                     <span class="contact__card-value">Hà Nội, Việt Nam</span>
                 </div>
             </div>
 
             <div class="contact__cta" data-animate="fade-up">
-                <a href="https://www.facebook.com/groups/880013402123211" 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   class="btn btn--primary btn--lg">
+                <a href="https://www.facebook.com/groups/880013402123211" target="_blank" rel="noopener noreferrer" class="btn btn--primary btn--lg">
                     <i class="ph ph-facebook-logo"></i>
                     Tham gia Group Facebook
                 </a>
@@ -312,7 +229,6 @@
         </div>
     </section>
 
-    <!-- ===================== FOOTER ===================== -->
     <footer class="footer">
         <div class="container">
             <div class="footer__content">
@@ -321,11 +237,7 @@
                     <p class="footer__tagline">Sẵn sàng từ 2012 — Anh em trên sân cỏ</p>
                 </div>
                 <div class="footer__social">
-                    <a href="https://www.facebook.com/groups/880013402123211" 
-                       target="_blank" 
-                       rel="noopener noreferrer" 
-                       class="footer__social-link"
-                       aria-label="Facebook Group">
+                    <a href="https://www.facebook.com/groups/880013402123211" target="_blank" rel="noopener noreferrer" class="footer__social-link">
                         <i class="ph ph-facebook-logo"></i>
                     </a>
                 </div>
@@ -336,10 +248,7 @@
         </div>
     </footer>
 
-    <!-- Back to top -->
-    <button class="back-to-top" id="backToTop" aria-label="Về đầu trang">
-        <i class="ph ph-caret-up"></i>
-    </button>
+    <button class="back-to-top" id="backToTop"><i class="ph ph-caret-up"></i></button>
 
     <script src="js/main.js"></script>
 </body>
