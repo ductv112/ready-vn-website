@@ -5,6 +5,52 @@
 (function () {
     'use strict';
 
+    // List of available images in r-image folder (excluding anhbia.jpg)
+    const availableImages = Array.from({ length: 48 }, (_, i) => `${i + 1}.jpg`);
+
+    // Helper to shuffle array
+    function shuffleArray(array) {
+        const newArr = [...array];
+        for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+        }
+        return newArr;
+    }
+
+    // ----- Randomize Images on Load -----
+    function randomizeImages() {
+        const shuffled = shuffleArray(availableImages);
+        let currentIndex = 0;
+
+        // 1. Randomize Story Image (1 image)
+        const storyImg = document.querySelector('.story__image img');
+        if (storyImg) {
+            storyImg.src = `r-image/${shuffled[currentIndex++]}`;
+        }
+
+        // 2. Randomize Brothers Section (Group photos - take first 4 from shuffled)
+        const brothersImgs = document.querySelectorAll('.brothers__photo img');
+        brothersImgs.forEach(img => {
+            if (currentIndex < shuffled.length) {
+                img.src = `r-image/${shuffled[currentIndex++]}`;
+            }
+        });
+
+        // 3. Randomize Gallery Section (Moments - take remaining)
+        const galleryImgs = document.querySelectorAll('.gallery__item img');
+        galleryImgs.forEach(img => {
+            if (currentIndex < shuffled.length) {
+                img.src = `r-image/${shuffled[currentIndex++]}`;
+            } else {
+                // If we run out, reshuffle and continue
+                const reshuffled = shuffleArray(availableImages);
+                let localIdx = 0;
+                img.src = `r-image/${reshuffled[localIdx++]}`;
+            }
+        });
+    }
+
     // ----- Navbar Scroll Effect -----
     function initNavbarScroll() {
         const navbar = document.getElementById('navbar');
@@ -31,7 +77,6 @@
             navMenu.classList.toggle('open');
         });
 
-        // Close menu when a link is clicked
         navMenu.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
                 navToggle.classList.remove('active');
@@ -53,7 +98,6 @@
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('animated');
-                    // Start counter if it's a stats item
                     if (entry.target.classList.contains('stats')) {
                         animateStats();
                     }
@@ -71,7 +115,7 @@
             if (stat.dataset.animated === 'true') return;
             
             const target = parseInt(stat.getAttribute('data-count'));
-            const duration = 2000; // 2 seconds
+            const duration = 2000;
             let startTimestamp = null;
 
             const step = (timestamp) => {
@@ -111,15 +155,14 @@
 
     // ----- Initialize -----
     function init() {
+        randomizeImages(); // Run randomization first
         initNavbarScroll();
         initMobileMenu();
         initScrollAnimations();
         initBackToTop();
         
-        // Remove loading state if any
         document.body.classList.add('loaded');
-        
-        console.log('🐅 Ready Web Initialized');
+        console.log('🐅 Ready Web Initialized with Random Images');
     }
 
     if (document.readyState === 'loading') {
