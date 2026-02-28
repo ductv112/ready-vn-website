@@ -12,10 +12,12 @@
         #score { font-size: 80px; font-weight: 900; font-family: 'Orbitron', sans-serif; line-height: 1; margin: 0; }
         #high-score { font-size: 14px; color: #f0f; text-transform: uppercase; letter-spacing: 5px; margin-top: 10px; opacity: 0.8; }
 
+        /* Fix Start Button on Mobile */
         #overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: radial-gradient(circle at center, rgba(0,255,255,0.1) 0%, rgba(0,0,0,1) 90%); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; cursor: pointer;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; cursor: pointer;
+            pointer-events: auto;
         }
         
         #gameover {
@@ -63,7 +65,8 @@
         <div id="high-score">READY ELITE BEST: 0</div>
     </div>
 
-    <div id="overlay" onclick="startGame()" style="cursor: pointer; pointer-events: auto;">
+    <!-- Start Screen Overlay -->
+    <div id="overlay">
         <div style="font-family: 'Orbitron'; color: #0ff; font-size: 12px; letter-spacing: 6px; margin-bottom: 15px; pointer-events: none;">READY FOOTBALL CLUB</div>
         <h1 style="color: #fff; font-size: 50px; font-family: 'Orbitron'; text-shadow: 0 0 40px #0ff; margin: 0; text-align: center; font-style: italic; font-weight: 900; pointer-events: none;">READY BALL</h1>
         <p style="color: #0ff; letter-spacing: 8px; margin-top: 10px; font-weight: bold; opacity: 0.8; font-size: 14px; pointer-events: none;">ULTIMATE EDITION</p>
@@ -93,39 +96,16 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // --- SCRIPT URL (Sếp đã cung cấp URL mới cho Ready Ball) ---
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMdRK3n6-e1LCXHJmz8i80InZdmACzM34C1GUvd0IBItwdL8iMJNfdHqYX-9jCR4Qb/exec';
 
-        // --- HIGH-END AUDIO ---
         class GameAudio {
             constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
-            bounce() {
-                const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-                o.type = 'triangle'; o.frequency.setTargetAtTime(150, this.ctx.currentTime, 0.05);
-                o.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.15);
-                g.gain.setValueAtTime(0.4, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-                o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.15);
-            }
-            point() {
-                const now = this.ctx.currentTime;
-                [523, 659, 783, 1046].forEach((f, i) => {
-                    const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-                    o.frequency.setValueAtTime(f, now + i*0.05); g.gain.setValueAtTime(0.1, now + i*0.05);
-                    g.gain.linearRampToValueAtTime(0, now + i*0.05 + 0.2);
-                    o.connect(g); g.connect(this.ctx.destination); o.start(now + i*0.05); o.stop(now + i*0.05 + 0.2);
-                });
-            }
-            crash() {
-                const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-                o.type = 'sawtooth'; o.frequency.setValueAtTime(100, this.ctx.currentTime);
-                o.frequency.linearRampToValueAtTime(20, this.ctx.currentTime + 0.8);
-                g.gain.setValueAtTime(0.5, this.ctx.currentTime); g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.8);
-                o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.8);
-            }
+            bounce() { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.type = 'triangle'; o.frequency.setTargetAtTime(150, this.ctx.currentTime, 0.05); o.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.15); g.gain.setValueAtTime(0.4, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.15); }
+            point() { const now = this.ctx.currentTime; [523, 659, 783, 1046].forEach((f, i) => { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.frequency.setValueAtTime(f, now + i*0.05); g.gain.setValueAtTime(0.1, now + i*0.05); g.gain.linearRampToValueAtTime(0, now + i*0.05 + 0.2); o.connect(g); g.connect(this.ctx.destination); o.start(now + i*0.05); o.stop(now + i*0.05 + 0.2); }); }
+            crash() { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(100, this.ctx.currentTime); o.frequency.linearRampToValueAtTime(20, this.ctx.currentTime + 0.8); g.gain.setValueAtTime(0.5, this.ctx.currentTime); g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.8); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + 0.8); }
         }
         let audio;
 
-        // --- 3D CORE ---
         let scene, camera, renderer, ball, obstacles = [], score = 0, speed = 0.14, isGameOver = false;
         let ballYVel = 0;
         const gravity = -0.01;
@@ -133,10 +113,19 @@
         const gapHeight = 5.5;
 
         function startGame() {
+            console.log("Start button pressed");
             document.getElementById('overlay').style.display = 'none';
             if(!audio) audio = new GameAudio();
             animate();
         }
+
+        // Add robust event listeners for mobile
+        const overlay = document.getElementById('overlay');
+        overlay.addEventListener('click', startGame);
+        overlay.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            startGame();
+        }, { passive: false });
 
         function init() {
             scene = new THREE.Scene();
@@ -154,9 +143,10 @@
             createEliteBall();
             const best = localStorage.getItem('ready_flappy_elite_best') || 0;
             document.getElementById('high-score').innerText = `READY ELITE BEST: ${best}`;
+            
             const handleAction = (e) => { 
-                if (e && e.type === 'touchstart') e.preventDefault();
-                if (!isGameOver) { ballYVel = lift; if (audio) audio.bounce(); } 
+                if (e && (e.type === 'touchstart' || e.type === 'touchend')) e.preventDefault();
+                if (!isGameOver && document.getElementById('overlay').style.display === 'none') { ballYVel = lift; if (audio) audio.bounce(); } 
             };
             window.addEventListener('mousedown', handleAction);
             window.addEventListener('touchstart', handleAction, { passive: false });
@@ -227,7 +217,6 @@
             displayLeaderboard();
         }
 
-        // --- LEADERBOARD LOGIC ---
         async function getLeaderboard() {
             try { const response = await fetch(SCRIPT_URL, { method: 'GET', redirect: 'follow' }); return await response.json(); }
             catch (e) { return []; }
@@ -251,7 +240,6 @@
                 li.appendChild(nS); li.appendChild(pS); list.appendChild(li);
             });
         }
-
         window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
         init();
     </script>
