@@ -25,3 +25,6 @@ function doPost(e) {
   sheet.appendRow([params.name, params.score, new Date()]);
   return ContentService.createTextOutput("SUCCESS").setMimeType(ContentService.MimeType.TEXT);
 }
+
+ID triển khai: AKfycbxMdRK3n6-e1LCXHJmz8i80InZdmACzM34C1GUvd0IBItwdL8iMJNfdHqYX-9jCR4Qb
+URL: https://script.google.com/macros/s/AKfycbxMdRK3n6-e1LCXHJmz8i80InZdmACzM34C1GUvd0IBItwdL8iMJNfdHqYX-9jCR4Qb/exec
