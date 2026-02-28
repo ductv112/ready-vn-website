@@ -2,17 +2,17 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VIRUS LORD - READY ARCADE</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Consolas', 'Courier New', monospace; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Consolas', 'Courier New', monospace; touch-action: none; }
         #ui { position: absolute; top: 20px; left: 20px; color: #0ff; text-shadow: 0 0 10px #0ff; pointer-events: none; z-index: 10; }
-        #score { font-size: 32px; font-weight: bold; margin-bottom: 5px; }
-        #status { font-size: 18px; color: #f0f; margin-top: 5px; height: 24px; font-weight: bold; text-transform: uppercase; }
-        #level { font-size: 22px; color: #ffff00; margin-top: 5px; }
+        #score { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+        #status { font-size: 14px; color: #f0f; margin-top: 5px; height: 20px; font-weight: bold; text-transform: uppercase; }
+        #level { font-size: 18px; color: #ffff00; margin-top: 5px; }
         #near-miss-popup, #x2-popup { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 40px; font-weight: bold; display: none;
+            font-size: 30px; font-weight: bold; display: none;
             pointer-events: none; z-index: 20;
         }
         #near-miss-popup { color: #ffff00; text-shadow: 0 0 20px #ffff00; }
@@ -26,37 +26,39 @@
         
         #game-over-screen {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95); padding: 40px; border: 2px solid #f00;
+            background: rgba(0, 0, 0, 0.95); padding: 20px; border: 2px solid #f00;
             box-shadow: 0 0 30px rgba(255, 0, 0, 0.3); color: #fff; text-align: center;
-            display: none; z-index: 300; width: 400px; border-radius: 15px;
+            display: none; z-index: 300; width: 90%; max-width: 400px; border-radius: 15px;
+            box-sizing: border-box;
         }
-        #game-over-screen h1 { color: #f00; font-size: 40px; margin: 0 0 20px; text-shadow: 0 0 10px #f00; }
-        #final-score { font-size: 32px; color: #ffff00; margin-bottom: 20px; }
+        #game-over-screen h1 { color: #f00; font-size: 32px; margin: 0 0 15px; text-shadow: 0 0 10px #f00; }
+        #final-score { font-size: 28px; color: #ffff00; margin-bottom: 15px; }
         
-        .leaderboard { margin: 20px 0; text-align: left; background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; }
-        .leaderboard h3 { margin-top: 0; color: #0ff; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
-        .leaderboard-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #222; font-size: 14px; }
+        .leaderboard { margin: 15px 0; text-align: left; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+        .leaderboard h3 { margin-top: 0; color: #0ff; text-align: center; border-bottom: 1px solid #333; padding-bottom: 8px; font-size: 16px; }
+        .leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #222; font-size: 13px; }
         .leaderboard-item:last-child { border-bottom: none; }
-        .leaderboard-item span.name { color: #fff; }
-        .leaderboard-item span.points { color: #0ff; font-weight: bold; }
         
-        .save-form { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .save-form { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
         .save-form input { 
-            padding: 12px; background: #222; border: 1px solid #444; color: #fff; 
+            padding: 10px; background: #222; border: 1px solid #444; color: #fff; 
             font-family: inherit; font-size: 16px; border-radius: 5px; text-align: center;
         }
         .save-form button { 
             padding: 12px; background: #0ff; color: #000; border: none; 
             cursor: pointer; font-weight: bold; font-family: inherit; font-size: 16px; border-radius: 5px;
         }
-        .save-form button:hover { background: #fff; }
         
         .restart-btn { 
-            margin-top: 20px; background: transparent; color: #fff; border: 1px solid #fff;
-            padding: 10px 20px; cursor: pointer; font-family: inherit; border-radius: 5px;
+            margin-top: 15px; background: transparent; color: #fff; border: 1px solid #fff;
+            padding: 10px; cursor: pointer; font-family: inherit; border-radius: 5px; font-size: 14px;
         }
-        .restart-btn:hover { background: #fff; color: #000; }
+        @media (max-width: 600px) {
+            #ui { top: 10px; left: 10px; }
+            #score { font-size: 20px; }
+            #game-over-screen h1 { font-size: 28px; }
+        }
     </style>
 </head>
 <body>
@@ -67,9 +69,9 @@
     </div>
 
     <div id="start-overlay">
-        <h1 style="color: #0ff; font-size: 60px; text-shadow: 0 0 20px #0ff; margin-bottom: 0;">VIRUS LORD</h1>
-        <p style="color: #fff; font-size: 24px; margin-top: 20px;">CLICK TO INITIALIZE SYSTEMS</p>
-        <p style="color: #0ff; font-size: 14px; opacity: 0.7;">(AUDIO WILL BE ENABLED)</p>
+        <h1 style="color: #0ff; font-size: 40px; text-shadow: 0 0 20px #0ff; margin-bottom: 0; text-align: center;">VIRUS LORD</h1>
+        <p style="color: #fff; font-size: 20px; margin-top: 20px; text-align: center;">TAP TO START</p>
+        <p style="color: #0ff; font-size: 12px; opacity: 0.7;">(Dùng ngón tay di chuyển khối AI)</p>
     </div>
 
     <div id="near-miss-popup">NEAR MISS! +100</div>
@@ -81,19 +83,17 @@
         
         <div class="leaderboard">
             <h3>BẢNG XẾP HẠNG READY</h3>
-            <ul id="leaderboard-list" class="leaderboard-list">
-                <!-- Scores go here -->
-            </ul>
+            <ul id="leaderboard-list" class="leaderboard-list"></ul>
         </div>
 
         <div id="save-section" class="save-form">
-            <input type="text" id="player-name" placeholder="NHẬP TÊN ANH EM..." maxlength="15">
-            <button onclick="saveScore()">GHI DANH BẢNG XẾP HẠNG</button>
+            <input type="text" id="player-name" placeholder="TÊN ANH EM..." maxlength="15">
+            <button onclick="saveScore()">GHI DANH</button>
         </div>
 
-        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-            <button class="restart-btn" onclick="location.reload()" style="margin-top: 0; flex: 1;">CHƠI LẠI</button>
-            <button class="restart-btn" onclick="location.href='../../games.html'" style="margin-top: 0; flex: 1; border-color: #0ff; color: #0ff;">DANH SÁCH GAME</button>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+            <button class="restart-btn" onclick="location.reload()" style="flex: 1;">CHƠI LẠI</button>
+            <button class="restart-btn" onclick="location.href='../../games.html'" style="flex: 1; border-color: #0ff; color: #0ff;">GAMES</button>
         </div>
     </div>
 
@@ -108,51 +108,40 @@
                 this.masterGain.gain.value = 0.3;
                 this.bgmOsc = null;
             }
-
             playBGM() {
                 if (this.bgmOsc) return;
                 this.bgmOsc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 this.bgmOsc.type = 'sawtooth';
-                this.bgmOsc.frequency.setValueAtTime(55, this.ctx.currentTime); // Low A
+                this.bgmOsc.frequency.setValueAtTime(55, this.ctx.currentTime);
                 gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
                 const filter = this.ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(200, this.ctx.currentTime);
-                this.bgmOsc.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.masterGain);
+                filter.type = 'lowpass'; filter.frequency.setValueAtTime(200, this.ctx.currentTime);
+                this.bgmOsc.connect(filter); filter.connect(gain); gain.connect(this.masterGain);
                 this.bgmOsc.start();
                 setInterval(() => {
                     filter.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
                     filter.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.4);
                 }, 500);
             }
-
             playSFX(type) {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.connect(gain);
-                gain.connect(this.masterGain);
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.masterGain);
                 const now = this.ctx.currentTime;
                 if (type === 'near-miss') {
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, now);
-                    osc.frequency.exponentialRampToValueAtTime(440, now + 0.1);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, now); osc.frequency.exponentialRampToValueAtTime(440, now + 0.1);
                     gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
                     osc.start(); osc.stop(now + 0.1);
                 } else if (type === 'hit') {
-                    osc.type = 'square'; osc.frequency.setValueAtTime(110, now);
-                    osc.frequency.linearRampToValueAtTime(50, now + 0.2);
+                    osc.type = 'square'; osc.frequency.setValueAtTime(110, now); osc.frequency.linearRampToValueAtTime(50, now + 0.2);
                     gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
                     osc.start(); osc.stop(now + 0.2);
                 } else if (type === 'shield-up') {
-                    osc.type = 'triangle'; osc.frequency.setValueAtTime(220, now);
-                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(220, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
                     gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
                     osc.start(); osc.stop(now + 0.3);
                 } else if (type === 'gameover') {
-                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, now);
-                    osc.frequency.linearRampToValueAtTime(20, now + 1);
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, now); osc.frequency.linearRampToValueAtTime(20, now + 1);
                     gain.gain.setValueAtTime(0.4, now); gain.gain.linearRampToValueAtTime(0.01, now + 1);
                     osc.start(); osc.stop(now + 1);
                 } else if (type === 'levelup') {
@@ -169,9 +158,12 @@
 
         let scene, camera, renderer, player, shieldMesh;
         let enemies = [], powerups = [], trails = [], boss = null;
-        let score = 0, level = 1;
-        let isGameOver = false;
+        let score = 0, level = 1, isGameOver = false;
         let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
+        
+        // Mobile Touch System
+        let touchActive = false, lastTouchX, lastTouchY;
+
         let hasShield = false, shieldTimer = 0;
         const SHIELD_DURATION = 300;
         let enemySpeed = 0.5, spawnRate = 35, frameCount = 0;
@@ -183,7 +175,7 @@
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.012);
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 8, 14);
+            camera.position.set(0, 10, 15);
             camera.lookAt(0, 1, 0);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -191,19 +183,38 @@
             document.body.appendChild(renderer.domElement);
             scene.add(new THREE.AmbientLight(0xffffff, 0.5));
             const pointLight = new THREE.PointLight(0x00ffff, 1, 100);
-            pointLight.position.set(0, 10, 0);
-            scene.add(pointLight);
+            pointLight.position.set(0, 10, 0); scene.add(pointLight);
             const gridHelper = new THREE.GridHelper(400, 80, 0x00ffff, 0x111111);
-            gridHelper.name = "grid";
-            scene.add(gridHelper);
+            gridHelper.name = "grid"; scene.add(gridHelper);
             player = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshPhongMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 0.8 }));
-            player.position.y = 0.6;
-            scene.add(player);
+            player.position.y = 0.6; scene.add(player);
             shieldMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6, 1), new THREE.MeshPhongMaterial({ color: 0x00ff00, transparent: true, opacity: 0.2, emissive: 0x00ff00, wireframe: true, wireframeLinewidth: 2 }));
-            shieldMesh.visible = false;
-            player.add(shieldMesh);
+            shieldMesh.visible = false; player.add(shieldMesh);
+            
             window.addEventListener('keydown', (e) => handleKey(e.code, true));
             window.addEventListener('keyup', (e) => handleKey(e.code, false));
+            
+            // Touch Events
+            window.addEventListener('touchstart', (e) => {
+                touchActive = true;
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+            }, { passive: false });
+            window.addEventListener('touchmove', (e) => {
+                if (!touchActive || isGameOver) return;
+                const dx = e.touches[0].clientX - lastTouchX;
+                const dy = e.touches[0].clientY - lastTouchY;
+                player.position.x += dx * 0.05;
+                player.position.z += dy * 0.05;
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+                // Constraints
+                player.position.x = Math.max(-21, Math.min(21, player.position.x));
+                player.position.z = Math.max(-18, Math.min(18, player.position.z));
+                e.preventDefault();
+            }, { passive: false });
+            window.addEventListener('touchend', () => { touchActive = false; });
+
             window.addEventListener('resize', onWindowResize, false);
             document.getElementById('start-overlay').addEventListener('click', () => {
                 document.getElementById('start-overlay').style.display = 'none';
@@ -222,18 +233,14 @@
 
         function createTrail() {
             const trail = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), new THREE.MeshBasicMaterial({ color: levelColors[currentColorIndex], transparent: true, opacity: 0.4 }));
-            trail.position.copy(player.position);
-            scene.add(trail);
-            trails.push({ mesh: trail, life: 20 });
+            trail.position.copy(player.position); scene.add(trail); trails.push({ mesh: trail, life: 15 });
         }
 
         function spawnEnemy() {
             if (bossActive) return;
-            const size = 1 + Math.random() * 1;
-            const color = levelColors[(currentColorIndex + 1) % levelColors.length];
+            const size = 1 + Math.random() * 1; const color = levelColors[(currentColorIndex + 1) % levelColors.length];
             const enemy = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 1 }));
-            enemy.position.set((Math.random() - 0.5) * 44, size/2, -120);
-            scene.add(enemy); enemies.push(enemy);
+            enemy.position.set((Math.random() - 0.5) * 44, size/2, -120); scene.add(enemy); enemies.push(enemy);
         }
 
         function spawnBoss() {
@@ -256,7 +263,7 @@
 
         function showX2Score(points) {
             if (sounds) sounds.playSFX('hit');
-            const popup = document.getElementById('x2-popup'); popup.innerText = `X2 SCORE! +${points}`; popup.style.display = 'block'; setTimeout(() => popup.style.display = 'none', 500);
+            const popup = document.getElementById('x2-popup'); popup.innerText = `X2! +${points}`; popup.style.display = 'block'; setTimeout(() => popup.style.display = 'none', 500);
             score += points; document.getElementById('score').innerText = `SCORE: ${score}`;
         }
 
@@ -279,9 +286,9 @@
             if (moveRight && player.position.x < 21) player.position.x += speed;
             if (moveUp && player.position.z > -18) player.position.z -= speed;
             if (moveDown && player.position.z < 18) player.position.z += speed;
-            if (frameCount % 3 === 0) createTrail();
+            if (frameCount % 4 === 0) createTrail();
             for (let i = trails.length - 1; i >= 0; i--) {
-                trails[i].life--; trails[i].mesh.material.opacity = trails[i].life / 20 * 0.4; trails[i].mesh.scale.multiplyScalar(0.95);
+                trails[i].life--; trails[i].mesh.material.opacity = trails[i].life / 15 * 0.4; trails[i].mesh.scale.multiplyScalar(0.95);
                 if (trails[i].life <= 0) { scene.remove(trails[i].mesh); trails.splice(i, 1); }
             }
             camera.position.x += (player.position.x * 0.4 - camera.position.x) * 0.05;
@@ -290,7 +297,7 @@
                 if (shieldTimer <= 0) { hasShield = false; shieldMesh.visible = false; document.getElementById('status').innerText = 'AI ONLINE - SURVIVE'; document.getElementById('status').style.color = '#f0f'; }
             }
             if (bossActive && boss) {
-                boss.position.z += 0.3; boss.rotation.y += 0.02; boss.rotation.x += 0.01;
+                boss.position.z += 0.3; boss.rotation.y += 0.02;
                 if (frameCount % 60 === 0) bossTargetX = (Math.random() - 0.5) * 30;
                 boss.position.x += (bossTargetX - boss.position.x) * 0.02;
                 if (player.position.distanceTo(boss.position) < 5) {
@@ -313,7 +320,7 @@
             for (let i = powerups.length - 1; i >= 0; i--) {
                 powerups[i].position.z += 0.3; if (player.position.distanceTo(powerups[i].position) < 2) {
                     if (sounds) sounds.playSFX('shield-up'); hasShield = true; shieldTimer = SHIELD_DURATION; scene.remove(powerups[i]); powerups.splice(i, 1);
-                    document.getElementById('status').innerText = 'SHIELD OVERLOAD! X2 POINTS!'; document.getElementById('status').style.color = '#0f0';
+                    document.getElementById('status').innerText = 'X2 POINTS ACTIVE!'; document.getElementById('status').style.color = '#0f0';
                 } else if (powerups[i].position.z > 25) { scene.remove(powerups[i]); powerups.splice(i, 1); }
             }
             renderer.render(scene, camera);
@@ -321,101 +328,38 @@
 
         function gameOver() {
             if (sounds) sounds.playSFX('gameover');
-            isGameOver = true;
-            document.getElementById('status').innerText = 'CORE SHUTDOWN';
-            document.getElementById('status').style.color = '#f00';
-            document.getElementById('final-score').innerText = `SCORE: ${score}`;
-            document.getElementById('game-over-screen').style.display = 'block';
-            displayLeaderboard();
+            isGameOver = true; document.getElementById('status').innerText = 'CORE SHUTDOWN';
+            document.getElementById('status').style.color = '#f00'; document.getElementById('final-score').innerText = `SCORE: ${score}`;
+            document.getElementById('game-over-screen').style.display = 'block'; displayLeaderboard();
         }
 
-        // --- LEADERBOARD LOGIC ---
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0DhAbI__D2ju_rHr0SGPqXgmVnRXE_qZ2dvOBk_GEW_dU2350IGQCogG0ofwipQKPwA/exec';
-
         async function getLeaderboard() {
-            try {
-                // Thêm cache: 'no-store' để luôn lấy dữ liệu mới nhất từ Sheet
-                const response = await fetch(SCRIPT_URL, { 
-                    method: 'GET',
-                    redirect: 'follow' 
-                });
-                if (!response.ok) throw new Error('Network response was not ok');
-                return await response.json();
-            } catch (e) {
-                console.error("Lỗi lấy BXH:", e);
-                // Nếu lỗi mạng, thử lấy từ localStorage làm dự phòng
-                const data = localStorage.getItem('ready_virus_lord_scores');
-                return data ? JSON.parse(data) : [];
-            }
+            try { const response = await fetch(SCRIPT_URL, { method: 'GET', redirect: 'follow' }); return await response.json(); }
+            catch (e) { const data = localStorage.getItem('ready_virus_lord_scores'); return data ? JSON.parse(data) : []; }
         }
-
         async function saveScore() {
-            const nameInput = document.getElementById('player-name');
-            const name = nameInput.value.trim().toUpperCase() || 'ANONYMOUS';
-            const saveBtn = document.querySelector('.save-form button');
-            
-            saveBtn.disabled = true;
-            saveBtn.innerText = 'ĐANG GHI DANH...';
-
+            const nameInput = document.getElementById('player-name'); const name = nameInput.value.trim().toUpperCase() || 'ANONYMOUS';
+            const saveBtn = document.querySelector('.save-form button'); saveBtn.disabled = true; saveBtn.innerText = 'ĐANG GHI...';
             try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, score })
-                });
-                
-                // Cập nhật local để dự phòng
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, score }) });
                 const board = localStorage.getItem('ready_virus_lord_scores') ? JSON.parse(localStorage.getItem('ready_virus_lord_scores')) : [];
-                board.push({ name, score });
-                board.sort((a, b) => b.score - a.score);
-                localStorage.setItem('ready_virus_lord_scores', JSON.stringify(board.slice(0, 10)));
-
-                document.getElementById('save-section').style.display = 'none';
-                setTimeout(displayLeaderboard, 1000); // Đợi 1s để Sheet cập nhật
-            } catch (e) {
-                console.error("Lỗi lưu điểm:", e);
-                saveBtn.disabled = false;
-                saveBtn.innerText = 'THỬ LẠI';
-            }
+                board.push({ name, score }); board.sort((a, b) => b.score - a.score); localStorage.setItem('ready_virus_lord_scores', JSON.stringify(board.slice(0, 10)));
+                document.getElementById('save-section').style.display = 'none'; setTimeout(displayLeaderboard, 1000);
+            } catch (e) { saveBtn.disabled = false; saveBtn.innerText = 'THỬ LẠI'; }
         }
-
         async function displayLeaderboard() {
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = '<li style="text-align:center;color:#0ff;padding:10px;">ĐANG TẢI BẢNG XẾP HẠNG...</li>';
-            
-            const board = await getLeaderboard();
-            list.innerHTML = ''; // Xóa thông báo đang tải
-
-            if (board.length === 0) {
-                list.innerHTML = '<li style="text-align:center;color:#666;padding:10px;">CHƯA CÓ KỶ LỤC</li>';
-                return;
-            }
-
+            const list = document.getElementById('leaderboard-list'); list.innerHTML = '<li style="text-align:center;color:#0ff;padding:10px;">ĐANG TẢI...</li>';
+            const board = await getLeaderboard(); list.innerHTML = '';
+            if (board.length === 0) { list.innerHTML = '<li style="text-align:center;color:#666;padding:10px;">CHƯA CÓ KỶ LỤC</li>'; return; }
             board.forEach((item, index) => {
-                const li = document.createElement('li');
-                li.className = 'leaderboard-item';
-                
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'name';
-                nameSpan.textContent = `${index + 1}. ${item.name.toUpperCase()}`; // Dùng textContent để chặn XSS
-                
-                const scoreSpan = document.createElement('span');
-                scoreSpan.className = 'points';
-                scoreSpan.textContent = item.score;
-                
-                li.appendChild(nameSpan);
-                li.appendChild(scoreSpan);
-                list.appendChild(li);
+                const li = document.createElement('li'); li.className = 'leaderboard-item';
+                const nS = document.createElement('span'); nS.className = 'name'; nS.textContent = `${index + 1}. ${item.name.toUpperCase()}`;
+                const pS = document.createElement('span'); pS.className = 'points'; pS.textContent = item.score;
+                li.appendChild(nS); li.appendChild(pS); list.appendChild(li);
             });
         }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
+        function onWindowResize() { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
         init();
     </script>
 </body>
