@@ -90,8 +90,8 @@
         const animatedElements = document.querySelectorAll('[data-animate]');
         
         const observerOptions = {
-            threshold: 0.15,
-            rootMargin: '0px 0px -50px 0px'
+            threshold: 0.05, // Nhạy hơn cho mobile
+            rootMargin: '0px 0px 50px 0px' // Load sớm hơn 50px trước khi cuộn tới
         };
 
         const observer = new IntersectionObserver((entries) => {
@@ -106,6 +106,11 @@
         }, observerOptions);
 
         animatedElements.forEach(el => observer.observe(el));
+        
+        // Dự phòng cho mobile: Tự động hiện sau 2 giây nếu chưa kịp cuộn
+        setTimeout(() => {
+            animatedElements.forEach(el => el.classList.add('animated'));
+        }, 2000);
     }
 
     // ----- Stats Counter Animation -----

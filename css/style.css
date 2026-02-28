@@ -469,10 +469,10 @@ ul {
 @media (min-width: 1024px) { .gallery { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 1440px) { .gallery { grid-template-columns: repeat(5, 1fr); } }
 
-.gallery__item { position: relative; border-radius: var(--r-md); overflow: hidden; aspect-ratio: 1; background: var(--c-dark); }
-.gallery__item--wide { grid-column: span 2; aspect-ratio: 2/1; }
-.gallery__item--tall { grid-row: span 2; aspect-ratio: auto; }
-.gallery__item img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--t-slow); }
+.gallery__item { position: relative; border-radius: var(--r-md); overflow: hidden; aspect-ratio: 1; background: var(--c-dark); min-height: 150px; }
+.gallery__item--wide { grid-column: span 2; aspect-ratio: 2/1; min-height: 180px; }
+.gallery__item--tall { grid-row: span 2; aspect-ratio: auto; min-height: 300px; }
+.gallery__item img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--t-slow); display: block; }
 .gallery__overlay {
     position: absolute; inset: 0; background: linear-gradient(180deg, transparent 50%, rgba(9, 9, 21, 0.9) 100%);
     display: flex; align-items: flex-end; padding: 2rem; opacity: 0; transition: opacity var(--t-base);
