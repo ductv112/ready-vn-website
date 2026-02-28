@@ -6,56 +6,67 @@
     <title>READY BALL ELITE - READY ARCADE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@600;700&display=swap');
-        body { margin: 0; overflow: hidden; background: #050510; font-family: 'Rajdhani', sans-serif; touch-action: none; user-select: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #050510; font-family: 'Rajdhani', sans-serif; touch-action: none; user-select: none; }
         
         #ui { position: absolute; top: 40px; width: 100%; text-align: center; color: #0ff; text-shadow: 0 0 20px #0ff; pointer-events: none; z-index: 10; }
         #score { font-size: 80px; font-weight: 900; font-family: 'Orbitron', sans-serif; line-height: 1; margin: 0; }
         #high-score { font-size: 14px; color: #f0f; text-transform: uppercase; letter-spacing: 5px; margin-top: 10px; opacity: 0.8; }
 
-        /* Fix Start Button on Mobile */
-        #overlay {
+        /* Full Screen Overlays */
+        .full-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; cursor: pointer;
-            pointer-events: auto;
-        }
-        
-        #gameover {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(10, 10, 30, 0.95); padding: 30px; border: 1px solid #0ff;
-            color: #fff; text-align: center; display: none; z-index: 200; border-radius: 30px;
-            box-shadow: 0 0 150px rgba(0,255,255,0.3); width: 90%; max-width: 380px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 2000; cursor: pointer; pointer-events: auto;
             box-sizing: border-box;
         }
         
-        #final-score { font-size: 60px; font-weight: 900; margin: 10px 0; font-family: 'Orbitron'; }
+        #overlay { background: #000; }
+        
+        #gameover {
+            background: rgba(5, 5, 20, 0.98); 
+            display: none; padding: 20px;
+            z-index: 3000; /* Highest level */
+        }
+        
+        .gameover-box {
+            background: rgba(10, 10, 30, 0.95); padding: 30px; border: 2px solid #0ff;
+            color: #fff; text-align: center; border-radius: 30px;
+            box-shadow: 0 0 100px rgba(0,255,255,0.3); width: 100%; max-width: 360px;
+        }
+        
+        #final-score { font-size: 60px; font-weight: 900; margin: 10px 0; font-family: 'Orbitron'; color: #fff; }
         
         .leaderboard { margin: 15px 0; text-align: left; background: #000; padding: 10px; border-radius: 10px; border: 1px solid #222; }
         .leaderboard h3 { margin-top: 0; color: #0ff; text-align: center; border-bottom: 1px solid #222; padding-bottom: 8px; font-size: 14px; text-transform: uppercase; }
         .leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; }
         .leaderboard-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #111; font-size: 13px; }
-        .leaderboard-item:last-child { border-bottom: none; }
-        .leaderboard-item .name { color: #fff; }
         .leaderboard-item .points { color: #0ff; font-weight: bold; }
         
         .save-form { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
         .save-form input { 
-            padding: 10px; background: #111; border: 1px solid #333; color: #fff; 
-            font-family: inherit; font-size: 16px; border-radius: 8px; text-align: center;
+            padding: 12px; background: #111; border: 1px solid #333; color: #fff; 
+            font-family: inherit; font-size: 16px; border-radius: 8px; text-align: center; pointer-events: auto;
         }
         .save-form button { 
             padding: 12px; background: #0ff; color: #000; border: none; 
-            cursor: pointer; font-weight: 900; font-family: 'Orbitron'; font-size: 14px; border-radius: 8px;
+            cursor: pointer; font-weight: 900; font-family: 'Orbitron'; font-size: 14px; border-radius: 8px; pointer-events: auto;
         }
         
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; width: 100%; }
         .btn-small { 
-            flex: 1; padding: 12px; background: transparent; color: #fff; border: 1px solid #fff;
-            cursor: pointer; font-family: 'Orbitron'; border-radius: 8px; font-size: 12px;
+            flex: 1; padding: 14px; background: transparent; color: #fff; border: 1px solid #fff;
+            cursor: pointer; font-family: 'Orbitron'; border-radius: 8px; font-size: 12px; pointer-events: auto;
         }
-        .btn-small:hover { background: #fff; color: #000; }
+        .btn-small:active { background: #fff; color: #000; }
 
         #hud-frames { position: absolute; inset: 0; border: 40px solid transparent; border-image: radial-gradient(circle, #0ff 0%, transparent 10%) 1; pointer-events: none; opacity: 0.3; }
+        
+        #start-hint {
+            position: absolute; bottom: 100px; width: 100%; text-align: center;
+            color: #0ff; font-family: 'Orbitron'; font-size: 16px; letter-spacing: 2px;
+            animation: blink 1s infinite; display: none; z-index: 50;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
     </style>
 </head>
 <body>
@@ -64,33 +75,38 @@
         <div id="score">0</div>
         <div id="high-score">READY ELITE BEST: 0</div>
     </div>
+    
+    <div id="start-hint">TAP TO KICK OFF!</div>
 
-    <!-- Start Screen Overlay -->
-    <div id="overlay">
+    <!-- Start Screen -->
+    <div id="overlay" class="full-overlay">
         <div style="font-family: 'Orbitron'; color: #0ff; font-size: 12px; letter-spacing: 6px; margin-bottom: 15px; pointer-events: none;">READY FOOTBALL CLUB</div>
         <h1 style="color: #fff; font-size: 50px; font-family: 'Orbitron'; text-shadow: 0 0 40px #0ff; margin: 0; text-align: center; font-style: italic; font-weight: 900; pointer-events: none;">READY BALL</h1>
         <p style="color: #0ff; letter-spacing: 8px; margin-top: 10px; font-weight: bold; opacity: 0.8; font-size: 14px; pointer-events: none;">ULTIMATE EDITION</p>
         <div style="margin-top: 60px; color: #0ff; border: 2px solid #0ff; padding: 15px 40px; border-radius: 100px; font-weight: bold; font-family: 'Orbitron'; pointer-events: none;">CHẠM ĐỂ RA SÂN</div>
     </div>
 
-    <div id="gameover">
-        <div style="color: #0ff; font-family: 'Orbitron'; font-size: 10px; letter-spacing: 4px; margin-bottom: 5px;">MISSION FAILED</div>
-        <h2 style="color: #f00; font-family: 'Orbitron'; margin: 0; font-size: 30px; font-weight: 900;">CRASHED</h2>
-        <div id="final-score">0</div>
-        
-        <div class="leaderboard">
-            <h3>BẢNG XẾP HẠNG</h3>
-            <ul id="leaderboard-list" class="leaderboard-list"></ul>
-        </div>
+    <!-- Game Over Screen -->
+    <div id="gameover" class="full-overlay">
+        <div class="gameover-box">
+            <div style="color: #0ff; font-family: 'Orbitron'; font-size: 10px; letter-spacing: 4px; margin-bottom: 5px;">MISSION FAILED</div>
+            <h2 style="color: #f00; font-family: 'Orbitron'; margin: 0; font-size: 30px; font-weight: 900;">CRASHED</h2>
+            <div id="final-score">0</div>
+            
+            <div class="leaderboard">
+                <h3>BẢNG XẾP HẠNG</h3>
+                <ul id="leaderboard-list" class="leaderboard-list"></ul>
+            </div>
 
-        <div id="save-section" class="save-form">
-            <input type="text" id="player-name" placeholder="TÊN ANH EM..." maxlength="15">
-            <button onclick="saveScore()">GHI DANH BẢNG XẾP HẠNG</button>
-        </div>
+            <div id="save-section" class="save-form">
+                <input type="text" id="player-name" placeholder="TÊN ANH EM..." maxlength="15">
+                <button id="save-btn">GHI DANH</button>
+            </div>
 
-        <div class="btn-group">
-            <button class="btn-small" onclick="location.reload()">LÀM LẠI AE ÊY</button>
-            <button class="btn-small" onclick="location.href='../../games.html'" style="border-color:#0ff; color:#0ff;">DS GAME</button>
+            <div class="btn-group">
+                <button class="btn-small" id="retry-btn">LÀM LẠI</button>
+                <button class="btn-small" id="list-btn" style="border-color:#0ff; color:#0ff;">DS GAME</button>
+            </div>
         </div>
     </div>
 
@@ -106,26 +122,31 @@
         }
         let audio;
 
-        let scene, camera, renderer, ball, obstacles = [], score = 0, speed = 0.14, isGameOver = false;
+        let scene, camera, renderer, ball, obstacles = [];
+        let score = 0, speed = 0.14, isGameOver = false, gameStarted = false;
         let ballYVel = 0;
         const gravity = -0.01;
         const lift = 0.24;
         const gapHeight = 5.5;
 
+        // Start interaction
         function startGame() {
-            console.log("Start button pressed");
             document.getElementById('overlay').style.display = 'none';
+            document.getElementById('start-hint').style.display = 'block';
             if(!audio) audio = new GameAudio();
             animate();
         }
 
-        // Add robust event listeners for mobile
-        const overlay = document.getElementById('overlay');
-        overlay.addEventListener('click', startGame);
-        overlay.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            startGame();
-        }, { passive: false });
+        document.getElementById('overlay').addEventListener('click', startGame);
+        document.getElementById('overlay').addEventListener('touchstart', (e) => { e.preventDefault(); startGame(); }, { passive: false });
+
+        // Game Over Button Listeners
+        document.getElementById('retry-btn').addEventListener('click', () => location.reload());
+        document.getElementById('retry-btn').addEventListener('touchstart', (e) => { e.preventDefault(); location.reload(); });
+        document.getElementById('list-btn').addEventListener('click', () => location.href='../../games.html');
+        document.getElementById('list-btn').addEventListener('touchstart', (e) => { e.preventDefault(); location.href='../../games.html'; });
+        document.getElementById('save-btn').addEventListener('click', saveScore);
+        document.getElementById('save-btn').addEventListener('touchstart', (e) => { e.preventDefault(); saveScore(); });
 
         function init() {
             scene = new THREE.Scene();
@@ -140,32 +161,44 @@
             scene.add(new THREE.AmbientLight(0xffffff, 0.4));
             const mainLight = new THREE.DirectionalLight(0x00ffff, 1.2); mainLight.position.set(5, 10, 10); scene.add(mainLight);
             const rimLight = new THREE.PointLight(0xff00ff, 1.5, 50); rimLight.position.set(-10, -5, 5); scene.add(rimLight);
+            
             createEliteBall();
+            
             const best = localStorage.getItem('ready_flappy_elite_best') || 0;
             document.getElementById('high-score').innerText = `READY ELITE BEST: ${best}`;
             
             const handleAction = (e) => { 
-                if (e && (e.type === 'touchstart' || e.type === 'touchend')) e.preventDefault();
-                if (!isGameOver && document.getElementById('overlay').style.display === 'none') { ballYVel = lift; if (audio) audio.bounce(); } 
+                if (isGameOver) return;
+                if (document.getElementById('overlay').style.display !== 'none') return;
+                
+                if (!gameStarted) {
+                    gameStarted = true;
+                    document.getElementById('start-hint').style.display = 'none';
+                }
+                
+                ballYVel = lift; 
+                if (audio) audio.bounce();
+                if (e && e.cancelable) e.preventDefault();
             };
+            
             window.addEventListener('mousedown', handleAction);
             window.addEventListener('touchstart', handleAction, { passive: false });
             window.addEventListener('keydown', (e) => { if(e.code === 'Space') handleAction(); });
+            
             spawnEliteObstacles();
         }
 
         function createEliteBall() {
-            const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 1024, 1024); ctx.fillStyle = '#111111'; const size = 120;
-            for(let y=0; y<1024+size; y+=size*1.5) { for(let x=0; x<1024+size; x+=size*1.732) {
+            const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512; const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 512, 512); ctx.fillStyle = '#111111'; const size = 60;
+            for(let y=0; y<512+size; y+=size*1.5) { for(let x=0; x<512+size; x+=size*1.732) {
                 const offsetX = (Math.floor(y/(size*1.5)) % 2) * (size*0.866); ctx.beginPath();
                 for(let i=0; i<6; i++) { const a = (Math.PI/3) * i; ctx.lineTo(x + offsetX + size * 0.7 * Math.cos(a), y + size * 0.7 * Math.sin(a)); }
                 ctx.closePath(); ctx.fill();
             } }
-            ctx.fillStyle = '#00ffff'; ctx.font = '900 180px Orbitron'; ctx.textAlign = 'center'; ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 40;
-            ctx.fillText('READY', 512, 480); ctx.font = '700 80px Rajdhani'; ctx.fillText('FOOTBALL CLUB', 512, 600);
+            ctx.fillStyle = '#00ffff'; ctx.font = '900 90px Orbitron'; ctx.textAlign = 'center'; ctx.fillText('READY', 256, 260);
             const texture = new THREE.CanvasTexture(canvas);
-            ball = new THREE.Mesh(new THREE.SphereGeometry(0.5, 64, 64), new THREE.MeshPhongMaterial({ map: texture, shininess: 120, emissive: 0x00ffff, emissiveIntensity: 0.15 }));
+            ball = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), new THREE.MeshPhongMaterial({ map: texture, shininess: 100, emissive: 0x00ffff, emissiveIntensity: 0.15 }));
             ball.position.set(-5, 0, 0); scene.add(ball);
         }
 
@@ -188,22 +221,25 @@
         function animate() {
             if (isGameOver) return;
             requestAnimationFrame(animate);
-            ballYVel += gravity; ball.position.y += ballYVel; ball.rotation.z -= 0.18; ball.rotation.x += 0.06;
-            camera.position.y += (ball.position.y * 0.3 - camera.position.y) * 0.05;
-            if (ball.position.y > 10 || ball.position.y < -10) gameOver();
-            speed += 0.00004;
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                obstacles[i].position.x -= speed;
-                if (Math.abs(ball.position.x - obstacles[i].position.x) < 1.1) {
-                    const h = obstacles[i].userData.h;
-                    if (ball.position.y > h + gapHeight/2 - 0.45 || ball.position.y < h - gapHeight/2 + 0.45) { gameOver(); }
-                }
-                if (!obstacles[i].userData.passed && obstacles[i].position.x < ball.position.x) {
-                    obstacles[i].userData.passed = true; score++; document.getElementById('score').innerText = score; if(audio) audio.point();
-                }
-                if (obstacles[i].position.x < -20) {
-                    obstacles[i].position.x = 40; obstacles[i].userData.passed = false; const newH = (Math.random() - 0.5) * 8; obstacles[i].userData.h = newH;
-                    obstacles[i].children[0].position.y = newH + gapHeight/2 + 10; obstacles[i].children[1].position.y = newH - gapHeight/2 - 10;
+            
+            if (gameStarted) {
+                ballYVel += gravity; ball.position.y += ballYVel; ball.rotation.z -= 0.18; ball.rotation.x += 0.06;
+                camera.position.y += (ball.position.y * 0.3 - camera.position.y) * 0.05;
+                if (ball.position.y > 10 || ball.position.y < -10) gameOver();
+                speed += 0.00004;
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    obstacles[i].position.x -= speed;
+                    if (Math.abs(ball.position.x - obstacles[i].position.x) < 1.1) {
+                        const h = obstacles[i].userData.h;
+                        if (ball.position.y > h + gapHeight/2 - 0.45 || ball.position.y < h - gapHeight/2 + 0.45) { gameOver(); }
+                    }
+                    if (!obstacles[i].userData.passed && obstacles[i].position.x < ball.position.x) {
+                        obstacles[i].userData.passed = true; score++; document.getElementById('score').innerText = score; if(audio) audio.point();
+                    }
+                    if (obstacles[i].position.x < -20) {
+                        obstacles[i].position.x = 40; obstacles[i].userData.passed = false; const newH = (Math.random() - 0.5) * 8; obstacles[i].userData.h = newH;
+                        obstacles[i].children[0].position.y = newH + gapHeight/2 + 10; obstacles[i].children[1].position.y = newH - gapHeight/2 - 10;
+                    }
                 }
             }
             renderer.render(scene, camera);
@@ -211,7 +247,7 @@
 
         function gameOver() {
             isGameOver = true; if (audio) audio.crash();
-            document.getElementById('final-score').innerText = score; document.getElementById('gameover').style.display = 'block';
+            document.getElementById('final-score').innerText = score; document.getElementById('gameover').style.display = 'flex';
             const best = localStorage.getItem('ready_flappy_elite_best') || 0;
             if (score > best) { localStorage.setItem('ready_flappy_elite_best', score); document.getElementById('high-score').innerText = `NEW RECORD: ${score}`; }
             displayLeaderboard();
@@ -223,7 +259,7 @@
         }
         async function saveScore() {
             const nameInput = document.getElementById('player-name'); const name = nameInput.value.trim().toUpperCase() || 'ANONYMOUS';
-            const saveBtn = document.querySelector('.save-form button'); saveBtn.disabled = true; saveBtn.innerText = 'ĐANG GHI...';
+            const saveBtn = document.getElementById('save-btn'); saveBtn.disabled = true; saveBtn.innerText = 'ĐANG GHI...';
             try {
                 await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, score }) });
                 document.getElementById('save-section').style.display = 'none'; setTimeout(displayLeaderboard, 1000);
