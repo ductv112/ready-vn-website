@@ -1,0 +1,27 @@
+// --- HƯỚNG DẪN CÀI ĐẶT BẢNG XẾP HẠNG CHO READY BALL ---
+// 1. Tạo 1 file Google Sheets mới dành riêng cho game Ready Ball.
+// 2. Vào Tiện ích (Extensions) -> Apps Script.
+// 3. Dán đoạn code bên dưới vào và nhấn "Triển khai" -> "Lưu hành mới".
+// 4. Chọn loại: "Ứng dụng web".
+// 5. Thực thi với tư cách: "Tôi".
+// 6. Ai có quyền truy cập: "Bất kỳ ai" (Anyone).
+// 7. Copy URL Web App và dán vào file index.html của game Ready Ball (dòng 104).
+
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = sheet.getDataRange().getValues();
+  var result = [];
+  for (var i = 1; i < data.length; i++) {
+    result.push({name: data[i][0], score: parseInt(data[i][1])});
+  }
+  result.sort((a, b) => b.score - a.score);
+  return ContentService.createTextOutput(JSON.stringify(result.slice(0, 10)))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var params = JSON.parse(e.postData.contents);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  sheet.appendRow([params.name, params.score, new Date()]);
+  return ContentService.createTextOutput("SUCCESS").setMimeType(ContentService.MimeType.TEXT);
+}
