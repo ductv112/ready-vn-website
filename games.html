@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ready Games - Khu vực giải trí cho anh em đội bóng.">
+    <meta name="theme-color" content="#12122b">
+    <title>Giải Trí — READY 🐅</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css">
+
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        .game-card {
+            background: #1a1a3a;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #2a2a5a;
+            display: flex;
+            flex-direction: column;
+        }
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+        .game-card__image {
+            height: 200px;
+            background: linear-gradient(45deg, #000, #1a1a3a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .game-card__image i {
+            font-size: 80px;
+            color: #00ffff;
+            opacity: 0.5;
+        }
+        .game-card__content {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+        .game-card__title {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .game-card__desc {
+            color: #ccc;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        .game-card__btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #00ffff;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .game-card__btn:hover {
+            background: #fff;
+        }
+        .games-hero {
+            padding: 100px 0 50px;
+            text-align: center;
+            background: linear-gradient(to bottom, #12122b, #0a0a1a);
+        }
+    </style>
+</head>
+<body>
+    <!-- ===================== NAVBAR ===================== -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar__container">
+            <a href="index.html" class="navbar__logo">
+                <span class="navbar__logo-text">READY</span>
+            </a>
+            <button class="navbar__toggle" id="navToggle" aria-label="Mở menu">
+                <span class="navbar__toggle-bar"></span>
+                <span class="navbar__toggle-bar"></span>
+                <span class="navbar__toggle-bar"></span>
+            </button>
+            <ul class="navbar__menu" id="navMenu">
+                <li><a href="index.html#story" class="navbar__link">Câu Chuyện</a></li>
+                <li><a href="index.html#brothers" class="navbar__link">Anh Em</a></li>
+                <li><a href="index.html#moments" class="navbar__link">Khoảnh Khắc</a></li>
+                <li><a href="games.html" class="navbar__link">Chơi GAME</a></li>
+                <li><a href="index.html#contact" class="navbar__link">Liên Hệ</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="games-hero">
+        <div class="container">
+            <header class="section-header">
+                <span class="section-header__label">Ready Arcade</span>
+                <h2 class="section-header__title">Khu Vực <span class="text-accent">Chơi GAME</span></h2>
+                <p style="color: #ccc; margin-top: 1rem;">Nơi anh em so trình và ghi danh bảng vàng.</p>
+            </header>
+
+            <div class="games-grid">
+                <!-- Game 1: Virus Lord -->
+                <div class="game-card">
+                    <div class="game-card__image">
+                        <i class="ph ph-bug"></i>
+                        <div style="position: absolute; bottom: 10px; right: 10px; background: #f00; color: #fff; padding: 2px 8px; font-size: 12px; border-radius: 3px;">HOT</div>
+                    </div>
+                    <div class="game-card__content">
+                        <h3 class="game-card__title">VIRUS LORD</h3>
+                        <p class="game-card__desc">Điều khiển AI Core né tránh và tiêu diệt virus lord trong không gian 3D Neon kịch tính. Thử thách 1 mạng duy nhất!</p>
+                        <a href="games/virus-lord/index.html" class="game-card__btn">Chơi Ngay</a>
+                    </div>
+                </div>
+
+                <!-- Game 2: Comming Soon -->
+                <div class="game-card" style="opacity: 0.6; filter: grayscale(1);">
+                    <div class="game-card__image">
+                        <i class="ph ph-hourglass"></i>
+                    </div>
+                    <div class="game-card__content">
+                        <h3 class="game-card__title">SẮP RA MẮT</h3>
+                        <p class="game-card__desc">Nhiều tựa game 3D hấp dẫn khác đang được Cọp phát triển cho anh em đội bóng.</p>
+                        <a href="#" class="game-card__btn" style="background: #555; cursor: not-allowed;">Coming Soon</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__bottom">
+                <p>&copy; 2012–2026 Ready. Games developed by Cop 🐅</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

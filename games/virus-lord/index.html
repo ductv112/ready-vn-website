@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIRUS LORD - READY ARCADE</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Consolas', 'Courier New', monospace; }
+        #ui { position: absolute; top: 20px; left: 20px; color: #0ff; text-shadow: 0 0 10px #0ff; pointer-events: none; z-index: 10; }
+        #score { font-size: 32px; font-weight: bold; margin-bottom: 5px; }
+        #status { font-size: 18px; color: #f0f; margin-top: 5px; height: 24px; font-weight: bold; text-transform: uppercase; }
+        #level { font-size: 22px; color: #ffff00; margin-top: 5px; }
+        #near-miss-popup, #x2-popup { 
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 40px; font-weight: bold; display: none;
+            pointer-events: none; z-index: 20;
+        }
+        #near-miss-popup { color: #ffff00; text-shadow: 0 0 20px #ffff00; }
+        #x2-popup { color: #00ff00; text-shadow: 0 0 20px #00ff00; }
+        
+        #start-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; z-index: 200; cursor: pointer;
+        }
+        
+        #game-over-screen {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95); padding: 40px; border: 2px solid #f00;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3); color: #fff; text-align: center;
+            display: none; z-index: 300; width: 400px; border-radius: 15px;
+        }
+        #game-over-screen h1 { color: #f00; font-size: 40px; margin: 0 0 20px; text-shadow: 0 0 10px #f00; }
+        #final-score { font-size: 32px; color: #ffff00; margin-bottom: 20px; }
+        
+        .leaderboard { margin: 20px 0; text-align: left; background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+        .leaderboard h3 { margin-top: 0; color: #0ff; text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
+        .leaderboard-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #222; font-size: 14px; }
+        .leaderboard-item:last-child { border-bottom: none; }
+        .leaderboard-item span.name { color: #fff; }
+        .leaderboard-item span.points { color: #0ff; font-weight: bold; }
+        
+        .save-form { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .save-form input { 
+            padding: 12px; background: #222; border: 1px solid #444; color: #fff; 
+            font-family: inherit; font-size: 16px; border-radius: 5px; text-align: center;
+        }
+        .save-form button { 
+            padding: 12px; background: #0ff; color: #000; border: none; 
+            cursor: pointer; font-weight: bold; font-family: inherit; font-size: 16px; border-radius: 5px;
+        }
+        .save-form button:hover { background: #fff; }
+        
+        .restart-btn { 
+            margin-top: 20px; background: transparent; color: #fff; border: 1px solid #fff;
+            padding: 10px 20px; cursor: pointer; font-family: inherit; border-radius: 5px;
+        }
+        .restart-btn:hover { background: #fff; color: #000; }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <div id="score">SCORE: 0</div>
+        <div id="level">LEVEL: 1 (NEON BLUE)</div>
+        <div id="status">INITIATING AI CORE...</div>
+    </div>
+
+    <div id="start-overlay">
+        <h1 style="color: #0ff; font-size: 60px; text-shadow: 0 0 20px #0ff; margin-bottom: 0;">VIRUS LORD</h1>
+        <p style="color: #fff; font-size: 24px; margin-top: 20px;">CLICK TO INITIALIZE SYSTEMS</p>
+        <p style="color: #0ff; font-size: 14px; opacity: 0.7;">(AUDIO WILL BE ENABLED)</p>
+    </div>
+
+    <div id="near-miss-popup">NEAR MISS! +100</div>
+    <div id="x2-popup">X2 SCORE! +100</div>
+
+    <div id="game-over-screen">
+        <h1>SYSTEM CRASHED</h1>
+        <div id="final-score">SCORE: 0</div>
+        
+        <div class="leaderboard">
+            <h3>BẢNG XẾP HẠNG READY</h3>
+            <ul id="leaderboard-list" class="leaderboard-list">
+                <!-- Scores go here -->
+            </ul>
+        </div>
+
+        <div id="save-section" class="save-form">
+            <input type="text" id="player-name" placeholder="NHẬP TÊN ANH EM..." maxlength="15">
+            <button onclick="saveScore()">GHI DANH BẢNG VÀNG</button>
+        </div>
+
+        <button class="restart-btn" onclick="location.reload()">CHƠI LẠI (REBOOT)</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- SOUND SYSTEM ---
+        class SoundManager {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.connect(this.ctx.destination);
+                this.masterGain.gain.value = 0.3;
+                this.bgmOsc = null;
+            }
+
+            playBGM() {
+                if (this.bgmOsc) return;
+                this.bgmOsc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                this.bgmOsc.type = 'sawtooth';
+                this.bgmOsc.frequency.setValueAtTime(55, this.ctx.currentTime); // Low A
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(200, this.ctx.currentTime);
+                this.bgmOsc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.masterGain);
+                this.bgmOsc.start();
+                setInterval(() => {
+                    filter.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.1);
+                    filter.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.4);
+                }, 500);
+            }
+
+            playSFX(type) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                const now = this.ctx.currentTime;
+                if (type === 'near-miss') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.exponentialRampToValueAtTime(440, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(); osc.stop(now + 0.1);
+                } else if (type === 'hit') {
+                    osc.type = 'square'; osc.frequency.setValueAtTime(110, now);
+                    osc.frequency.linearRampToValueAtTime(50, now + 0.2);
+                    gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(); osc.stop(now + 0.2);
+                } else if (type === 'shield-up') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(); osc.stop(now + 0.3);
+                } else if (type === 'gameover') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(20, now + 1);
+                    gain.gain.setValueAtTime(0.4, now); gain.gain.linearRampToValueAtTime(0.01, now + 1);
+                    osc.start(); osc.stop(now + 1);
+                } else if (type === 'levelup') {
+                    [523.25, 659.25, 783.99].forEach((f, i) => {
+                        const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+                        o.type = 'sine'; o.frequency.setValueAtTime(f, now + i*0.1);
+                        g.gain.setValueAtTime(0.1, now + i*0.1); g.gain.linearRampToValueAtTime(0.01, now + i*0.1 + 0.3);
+                        o.connect(g); g.connect(this.masterGain); o.start(now + i*0.1); o.stop(now + i*0.1 + 0.3);
+                    });
+                }
+            }
+        }
+        let sounds;
+
+        let scene, camera, renderer, player, shieldMesh;
+        let enemies = [], powerups = [], trails = [], boss = null;
+        let score = 0, level = 1;
+        let isGameOver = false;
+        let moveLeft = false, moveRight = false, moveUp = false, moveDown = false;
+        let hasShield = false, shieldTimer = 0;
+        const SHIELD_DURATION = 300;
+        let enemySpeed = 0.5, spawnRate = 35, frameCount = 0;
+        let bossActive = false, bossTargetX = 0;
+        const levelColors = [0x00ffff, 0xff00ff, 0xffff00, 0x00ff00, 0xff0000];
+        let currentColorIndex = 0;
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.012);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 8, 14);
+            camera.lookAt(0, 1, 0);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000);
+            document.body.appendChild(renderer.domElement);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const pointLight = new THREE.PointLight(0x00ffff, 1, 100);
+            pointLight.position.set(0, 10, 0);
+            scene.add(pointLight);
+            const gridHelper = new THREE.GridHelper(400, 80, 0x00ffff, 0x111111);
+            gridHelper.name = "grid";
+            scene.add(gridHelper);
+            player = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshPhongMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 0.8 }));
+            player.position.y = 0.6;
+            scene.add(player);
+            shieldMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6, 1), new THREE.MeshPhongMaterial({ color: 0x00ff00, transparent: true, opacity: 0.2, emissive: 0x00ff00, wireframe: true, wireframeLinewidth: 2 }));
+            shieldMesh.visible = false;
+            player.add(shieldMesh);
+            window.addEventListener('keydown', (e) => handleKey(e.code, true));
+            window.addEventListener('keyup', (e) => handleKey(e.code, false));
+            window.addEventListener('resize', onWindowResize, false);
+            document.getElementById('start-overlay').addEventListener('click', () => {
+                document.getElementById('start-overlay').style.display = 'none';
+                sounds = new SoundManager(); sounds.playBGM();
+                document.getElementById('status').innerText = 'AI ONLINE - SURVIVE';
+                animate();
+            });
+        }
+
+        function handleKey(code, isPressed) {
+            if (code === 'ArrowLeft' || code === 'KeyA') moveLeft = isPressed;
+            if (code === 'ArrowRight' || code === 'KeyD') moveRight = isPressed;
+            if (code === 'ArrowUp' || code === 'KeyW') moveUp = isPressed;
+            if (code === 'ArrowDown' || code === 'KeyS') moveDown = isPressed;
+        }
+
+        function createTrail() {
+            const trail = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), new THREE.MeshBasicMaterial({ color: levelColors[currentColorIndex], transparent: true, opacity: 0.4 }));
+            trail.position.copy(player.position);
+            scene.add(trail);
+            trails.push({ mesh: trail, life: 20 });
+        }
+
+        function spawnEnemy() {
+            if (bossActive) return;
+            const size = 1 + Math.random() * 1;
+            const color = levelColors[(currentColorIndex + 1) % levelColors.length];
+            const enemy = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 1 }));
+            enemy.position.set((Math.random() - 0.5) * 44, size/2, -120);
+            scene.add(enemy); enemies.push(enemy);
+        }
+
+        function spawnBoss() {
+            bossActive = true; document.getElementById('status').innerText = 'VIRUS LORD DETECTED!'; document.getElementById('status').style.color = '#ff0000';
+            boss = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 8), new THREE.MeshPhongMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 2, wireframe: true }));
+            boss.position.set(0, 4, -150); scene.add(boss);
+        }
+
+        function spawnPowerup() {
+            const group = new THREE.Group(); const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.1, 6), new THREE.MeshPhongMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 1.5, transparent: true, opacity: 0.8 }));
+            plate.rotation.x = Math.PI / 2; group.add(plate); group.position.set((Math.random() - 0.5) * 35, 1, -100);
+            scene.add(group); powerups.push(group);
+        }
+
+        function showNearMiss() {
+            if (sounds) sounds.playSFX('near-miss');
+            const popup = document.getElementById('near-miss-popup'); popup.style.display = 'block'; setTimeout(() => popup.style.display = 'none', 500);
+            score += 100; document.getElementById('score').innerText = `SCORE: ${score}`;
+        }
+
+        function showX2Score(points) {
+            if (sounds) sounds.playSFX('hit');
+            const popup = document.getElementById('x2-popup'); popup.innerText = `X2 SCORE! +${points}`; popup.style.display = 'block'; setTimeout(() => popup.style.display = 'none', 500);
+            score += points; document.getElementById('score').innerText = `SCORE: ${score}`;
+        }
+
+        function updateDifficulty() {
+            let newLevel = Math.floor(score / 500) + 1;
+            if (newLevel > level) {
+                level = newLevel; currentColorIndex = (level - 1) % levelColors.length; let color = levelColors[currentColorIndex];
+                player.material.color.setHex(color); player.material.emissive.setHex(color); scene.getObjectByName("grid").material.color.setHex(color);
+                document.getElementById('level').innerText = `LEVEL: ${level}`; document.getElementById('level').style.color = '#' + color.toString(16).padStart(6, '0');
+                if (sounds) sounds.playSFX('levelup'); enemySpeed += 0.08; spawnRate = Math.max(8, spawnRate - 3);
+            }
+            if (score > 0 && score % 1500 === 0 && !bossActive) spawnBoss();
+        }
+
+        function animate() {
+            if (isGameOver) return;
+            requestAnimationFrame(animate);
+            const speed = 0.3;
+            if (moveLeft && player.position.x > -21) player.position.x -= speed;
+            if (moveRight && player.position.x < 21) player.position.x += speed;
+            if (moveUp && player.position.z > -18) player.position.z -= speed;
+            if (moveDown && player.position.z < 18) player.position.z += speed;
+            if (frameCount % 3 === 0) createTrail();
+            for (let i = trails.length - 1; i >= 0; i--) {
+                trails[i].life--; trails[i].mesh.material.opacity = trails[i].life / 20 * 0.4; trails[i].mesh.scale.multiplyScalar(0.95);
+                if (trails[i].life <= 0) { scene.remove(trails[i].mesh); trails.splice(i, 1); }
+            }
+            camera.position.x += (player.position.x * 0.4 - camera.position.x) * 0.05;
+            if (hasShield) {
+                shieldTimer--; shieldMesh.visible = true; shieldMesh.rotation.y += 0.15; shieldMesh.scale.setScalar(1 + Math.sin(Date.now()*0.01)*0.1);
+                if (shieldTimer <= 0) { hasShield = false; shieldMesh.visible = false; document.getElementById('status').innerText = 'AI ONLINE - SURVIVE'; document.getElementById('status').style.color = '#f0f'; }
+            }
+            if (bossActive && boss) {
+                boss.position.z += 0.3; boss.rotation.y += 0.02; boss.rotation.x += 0.01;
+                if (frameCount % 60 === 0) bossTargetX = (Math.random() - 0.5) * 30;
+                boss.position.x += (bossTargetX - boss.position.x) * 0.02;
+                if (player.position.distanceTo(boss.position) < 5) {
+                    if (hasShield) { showX2Score(2000); scene.remove(boss); boss = null; bossActive = false; document.getElementById('status').innerText = 'BOSS DESTROYED!'; document.getElementById('status').style.color = '#00ff00'; }
+                    else gameOver();
+                }
+                if (boss && boss.position.z > 25) { scene.remove(boss); boss = null; bossActive = false; document.getElementById('status').innerText = 'BOSS ESCAPED'; }
+            }
+            frameCount++; if (frameCount % Math.floor(spawnRate) === 0) spawnEnemy(); if (frameCount % 800 === 0) spawnPowerup();
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                enemies[i].position.z += enemySpeed; enemies[i].rotation.y += 0.05;
+                const dist = player.position.distanceTo(enemies[i].position);
+                if (dist > 1.3 && dist < 2.5 && !hasShield && !enemies[i].missed) { enemies[i].missed = true; showNearMiss(); }
+                if (dist < 1.3) {
+                    if (hasShield) { scene.remove(enemies[i]); enemies.splice(i, 1); showX2Score(100); continue; }
+                    else gameOver();
+                }
+                if (enemies[i].position.z > 25) { scene.remove(enemies[i]); enemies.splice(i, 1); score += 10; document.getElementById('score').innerText = `SCORE: ${score}`; updateDifficulty(); }
+            }
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                powerups[i].position.z += 0.3; if (player.position.distanceTo(powerups[i].position) < 2) {
+                    if (sounds) sounds.playSFX('shield-up'); hasShield = true; shieldTimer = SHIELD_DURATION; scene.remove(powerups[i]); powerups.splice(i, 1);
+                    document.getElementById('status').innerText = 'SHIELD OVERLOAD! X2 POINTS!'; document.getElementById('status').style.color = '#0f0';
+                } else if (powerups[i].position.z > 25) { scene.remove(powerups[i]); powerups.splice(i, 1); }
+            }
+            renderer.render(scene, camera);
+        }
+
+        function gameOver() {
+            if (sounds) sounds.playSFX('gameover');
+            isGameOver = true;
+            document.getElementById('status').innerText = 'CORE SHUTDOWN';
+            document.getElementById('status').style.color = '#f00';
+            document.getElementById('final-score').innerText = `SCORE: ${score}`;
+            document.getElementById('game-over-screen').style.display = 'block';
+            displayLeaderboard();
+        }
+
+        // --- LEADERBOARD LOGIC ---
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0DhAbI__D2ju_rHr0SGPqXgmVnRXE_qZ2dvOBk_GEW_dU2350IGQCogG0ofwipQKPwA/exec';
+
+        async function getLeaderboard() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                return await response.json();
+            } catch (e) {
+                console.error("Lỗi lấy BXH:", e);
+                const data = localStorage.getItem('ready_virus_lord_scores');
+                return data ? JSON.parse(data) : [];
+            }
+        }
+
+        async function saveScore() {
+            const nameInput = document.getElementById('player-name');
+            const name = nameInput.value.trim().toUpperCase() || 'ANONYMOUS';
+            const saveBtn = document.querySelector('.save-form button');
+            
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'ĐANG GHI DANH...';
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, score })
+                });
+                
+                // Cập nhật local để dự phòng
+                const board = localStorage.getItem('ready_virus_lord_scores') ? JSON.parse(localStorage.getItem('ready_virus_lord_scores')) : [];
+                board.push({ name, score });
+                board.sort((a, b) => b.score - a.score);
+                localStorage.setItem('ready_virus_lord_scores', JSON.stringify(board.slice(0, 10)));
+
+                document.getElementById('save-section').style.display = 'none';
+                setTimeout(displayLeaderboard, 1000); // Đợi 1s để Sheet cập nhật
+            } catch (e) {
+                console.error("Lỗi lưu điểm:", e);
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'THỬ LẠI';
+            }
+        }
+
+        async function displayLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '<li style="text-align:center;color:#0ff;padding:10px;">ĐANG TẢI BẢNG XẾP HẠNG...</li>';
+            
+            const board = await getLeaderboard();
+            list.innerHTML = ''; // Xóa thông báo đang tải
+
+            if (board.length === 0) {
+                list.innerHTML = '<li style="text-align:center;color:#666;padding:10px;">CHƯA CÓ KỶ LỤC</li>';
+                return;
+            }
+
+            board.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'leaderboard-item';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'name';
+                nameSpan.textContent = `${index + 1}. ${item.name.toUpperCase()}`; // Dùng textContent để chặn XSS
+                
+                const scoreSpan = document.createElement('span');
+                scoreSpan.className = 'points';
+                scoreSpan.textContent = item.score;
+                
+                li.appendChild(nameSpan);
+                li.appendChild(scoreSpan);
+                list.appendChild(li);
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
