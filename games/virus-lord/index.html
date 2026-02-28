@@ -331,10 +331,16 @@
 
         async function getLeaderboard() {
             try {
-                const response = await fetch(SCRIPT_URL);
+                // Thêm cache: 'no-store' để luôn lấy dữ liệu mới nhất từ Sheet
+                const response = await fetch(SCRIPT_URL, { 
+                    method: 'GET',
+                    redirect: 'follow' 
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
                 return await response.json();
             } catch (e) {
                 console.error("Lỗi lấy BXH:", e);
+                // Nếu lỗi mạng, thử lấy từ localStorage làm dự phòng
                 const data = localStorage.getItem('ready_virus_lord_scores');
                 return data ? JSON.parse(data) : [];
             }
