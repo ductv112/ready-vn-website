@@ -79,6 +79,40 @@
         .game-card__btn:hover {
             background: #fff;
         }
+        
+        /* Leaderboard Styles on Game List */
+        .game-leaderboard {
+            margin-top: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            border: 1px solid #333;
+        }
+        .game-leaderboard h4 {
+            color: #0ff;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin: 0 0 0.8rem 0;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .leaderboard-mini-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .leaderboard-mini-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 4px 0;
+            border-bottom: 1px solid #222;
+            color: #ccc;
+        }
+        .leaderboard-mini-item:last-child { border-bottom: none; }
+        .leaderboard-mini-item .name { color: #fff; }
+        .leaderboard-mini-item .score { color: #0ff; font-weight: bold; }
+
         .games-hero {
             padding: 100px 0 50px;
             text-align: center;
@@ -126,7 +160,18 @@
                     <div class="game-card__content">
                         <h3 class="game-card__title">VIRUS LORD</h3>
                         <p class="game-card__desc">Điều khiển AI Core né tránh và tiêu diệt virus lord trong không gian 3D Neon kịch tính. Thử thách 1 mạng duy nhất!</p>
-                        <a href="games/virus-lord/index.html" class="game-card__btn">Chơi Ngay</a>
+                        
+                        <!-- Mini Leaderboard -->
+                        <div class="game-leaderboard">
+                            <h4>Bảng Xếp Hạng</h4>
+                            <ul class="leaderboard-mini-list" id="virus-lord-top">
+                                <li style="text-align:center; padding: 10px; font-size: 0.8rem; color: #888;">Đang tải...</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem;">
+                            <a href="games/virus-lord/index.html" class="game-card__btn">Chơi Ngay</a>
+                        </div>
                     </div>
                 </div>
 
@@ -154,5 +199,38 @@
     </footer>
 
     <script src="js/main.js"></script>
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0DhAbI__D2ju_rHr0SGPqXgmVnRXE_qZ2dvOBk_GEW_dU2350IGQCogG0ofwipQKPwA/exec';
+
+        async function fetchVirusLordTop() {
+            const list = document.getElementById('virus-lord-top');
+            try {
+                const response = await fetch(SCRIPT_URL, { 
+                    method: 'GET',
+                    redirect: 'follow' 
+                });
+                if (!response.ok) throw new Error('Network error');
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    list.innerHTML = '<li style="text-align:center; padding: 10px; font-size: 0.8rem; color: #888;">Chưa có kỷ lục</li>';
+                    return;
+                }
+
+                list.innerHTML = data.slice(0, 10).map((item, index) => `
+                    <li class="leaderboard-mini-item">
+                        <span class="name">${index + 1}. ${item.name.toUpperCase()}</span>
+                        <span class="score">${item.score}</span>
+                    </li>
+                `).join('');
+
+            } catch (e) {
+                console.error("Lỗi lấy BXH:", e);
+                list.innerHTML = '<li style="text-align:center; padding: 10px; font-size: 0.8rem; color: #888;">Tạm thời lỗi...</li>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchVirusLordTop);
+    </script>
 </body>
 </html>

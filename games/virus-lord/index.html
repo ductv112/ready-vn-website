@@ -88,10 +88,13 @@
 
         <div id="save-section" class="save-form">
             <input type="text" id="player-name" placeholder="NHẬP TÊN ANH EM..." maxlength="15">
-            <button onclick="saveScore()">GHI DANH BẢNG VÀNG</button>
+            <button onclick="saveScore()">GHI DANH BẢNG XẾP HẠNG</button>
         </div>
 
-        <button class="restart-btn" onclick="location.reload()">CHƠI LẠI (REBOOT)</button>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+            <button class="restart-btn" onclick="location.reload()" style="margin-top: 0; flex: 1;">CHƠI LẠI</button>
+            <button class="restart-btn" onclick="location.href='../../index.html'" style="margin-top: 0; flex: 1; border-color: #0ff; color: #0ff;">VỀ TRANG CHỦ</button>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
