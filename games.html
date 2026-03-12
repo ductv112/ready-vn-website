@@ -255,22 +255,6 @@
         async function fetchTopScores(url, elementId) {
             const list = document.getElementById(elementId);
             try {
-                // If URL is placeholder, try localStorage
-                if (url.startsWith('PASTE_')) {
-                    const localData = localStorage.getItem('ready_hormuzwar_scores');
-                    const data = localData ? JSON.parse(localData) : [];
-                    if (data.length === 0) {
-                        list.innerHTML = '<li style="text-align:center; padding: 10px; font-size: 0.8rem; color: #888;">Chưa có kỷ lục</li>';
-                        return;
-                    }
-                    list.innerHTML = data.slice(0, 10).map((item, index) => `
-                        <li class="leaderboard-mini-item">
-                            <span class="name">${index + 1}. ${item.name.toUpperCase()}</span>
-                            <span class="score">${item.score}</span>
-                        </li>
-                    `).join('');
-                    return;
-                }
                 const response = await fetch(url, { method: 'GET', redirect: 'follow' });
                 if (!response.ok) throw new Error('Network error');
                 const data = await response.json();

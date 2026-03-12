@@ -6,7 +6,7 @@
     'use strict';
 
     // List of available images in r-image folder (excluding anhbia.jpg)
-    const availableImages = Array.from({ length: 48 }, (_, i) => `${i + 1}.jpg`);
+    const availableImages = [...Array.from({ length: 48 }, (_, i) => `${i + 1}.jpg`), '20260312.jpg'];
 
     // Helper to shuffle array
     function shuffleArray(array) {

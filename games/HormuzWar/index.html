@@ -119,6 +119,7 @@ const W = 900, H = 700;
 
 // ============== MOBILE / RESPONSIVE ==============
 const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+const mScale = isMobile ? 1.5 : 1; // UI scale factor for mobile
 
 function resizeCanvas() {
   const maxW = window.innerWidth;
@@ -129,6 +130,18 @@ function resizeCanvas() {
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
+
+// Fullscreen API for mobile
+function requestFullscreen() {
+  const el = document.documentElement;
+  const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if (rfs) {
+    rfs.call(el).catch(() => {});
+  }
+}
+// Re-hide address bar on orientation change
+window.addEventListener('resize', () => { if (isMobile) window.scrollTo(0, 1); });
+if (isMobile) window.scrollTo(0, 1);
 
 function getTouchPos(touch) {
   const rect = canvas.getBoundingClientRect();
@@ -1657,74 +1670,100 @@ function drawWeather(dt) {
 }
 
 function drawHUD() {
+  const hudH = isMobile ? 48 : 36;
+  const hudFont = isMobile ? 'bold 18px Segoe UI' : 'bold 14px Segoe UI';
+  const hudY = isMobile ? 32 : 24;
+
   // Top bar
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillRect(0, 0, W, 36);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, W, hudH);
   ctx.strokeStyle = 'rgba(100,150,200,0.3)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(0, 36);
-  ctx.lineTo(W, 36);
+  ctx.moveTo(0, hudH);
+  ctx.lineTo(W, hudH);
   ctx.stroke();
 
-  ctx.font = 'bold 14px Segoe UI';
+  ctx.font = hudFont;
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#ffd700';
-  ctx.fillText('Gold: ' + game.gold, 10, 24);
 
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText('Wave: ' + game.wave + (game.isReplay ? ' (Replay)' : ''), 150, 24);
+  if (isMobile) {
+    // Mobile: 2-row HUD for readability
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText('G:' + game.gold, 10, 20);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('W:' + game.wave + (game.isReplay ? '(R)' : ''), 135, 20);
+    ctx.fillStyle = '#44aaff';
+    ctx.fillText('S:' + game.score, 270, 20);
+    ctx.fillStyle = '#ff6644';
+    ctx.fillText('L:' + (game.maxFails - game.failedWaves), 400, 20);
+    ctx.fillStyle = '#88ddff';
+    ctx.fillText('Fleet:' + game.escortShips.length + '/' + game.maxSlots, 480, 20);
 
-  ctx.fillStyle = '#44aaff';
-  ctx.fillText('Score: ' + game.score, 280, 24);
+    // Row 2
+    ctx.fillStyle = '#ffaa44';
+    ctx.fillText('Missile:' + game.interceptorMissiles, 10, 42);
+    const wName = WEATHER_TYPES[game.weather].name;
+    const wColor = game.weather === 'clear' ? '#88ff88' : game.weather === 'fog' ? '#aabbcc' : game.weather === 'storm' ? '#8888ff' : '#6666aa';
+    ctx.fillStyle = wColor;
+    ctx.fillText(wName, 200, 42);
+    const alive = game.convoyShips.filter(c => c.hp > 0).length;
+    ctx.fillStyle = alive > 0 ? '#44ff88' : '#ff4444';
+    ctx.fillText('Convoy:' + alive + '/' + game.totalConvoy, 330, 42);
+  } else {
+    // Desktop: single row
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText('Gold: ' + game.gold, 10, hudY);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('Wave: ' + game.wave + (game.isReplay ? ' (Replay)' : ''), 150, hudY);
+    ctx.fillStyle = '#44aaff';
+    ctx.fillText('Score: ' + game.score, 280, hudY);
+    ctx.fillStyle = '#ff6644';
+    ctx.fillText('Lives: ' + (game.maxFails - game.failedWaves), 420, hudY);
+    ctx.fillStyle = '#88ddff';
+    ctx.fillText('Ships: ' + game.escortShips.length + '/' + game.maxSlots, 550, hudY);
+    ctx.fillStyle = '#ffaa44';
+    ctx.fillText('Interceptors: ' + game.interceptorMissiles, 680, hudY);
+    const wName = WEATHER_TYPES[game.weather].name;
+    const wColor = game.weather === 'clear' ? '#88ff88' : game.weather === 'fog' ? '#aabbcc' : game.weather === 'storm' ? '#8888ff' : '#6666aa';
+    ctx.fillStyle = wColor;
+    ctx.textAlign = 'center';
+    ctx.fillText(wName, W / 2 + 70, hudY);
+    const alive = game.convoyShips.filter(c => c.hp > 0).length;
+    ctx.fillStyle = alive > 0 ? '#44ff88' : '#ff4444';
+    ctx.textAlign = 'right';
+    ctx.fillText('Convoy: ' + alive + '/' + game.totalConvoy, W - 10, hudY);
+  }
 
-  ctx.fillStyle = '#ff6644';
-  const livesLeft = game.maxFails - game.failedWaves;
-  ctx.fillText('Lives: ' + livesLeft, 420, 24);
-
-  ctx.fillStyle = '#88ddff';
-  ctx.fillText('Ships: ' + game.escortShips.length + '/' + game.maxSlots, 550, 24);
-
-  ctx.fillStyle = '#ffaa44';
-  ctx.fillText('Interceptors: ' + game.interceptorMissiles, 680, 24);
-
-  // Weather indicator
-  const wName = WEATHER_TYPES[game.weather].name;
-  const wColor = game.weather === 'clear' ? '#88ff88' : game.weather === 'fog' ? '#aabbcc' : game.weather === 'storm' ? '#8888ff' : '#6666aa';
-  ctx.fillStyle = wColor;
-  ctx.textAlign = 'center';
-  ctx.fillText(wName, W / 2 + 70, 24);
-
-  // Convoy status
-  const alive = game.convoyShips.filter(c => c.hp > 0).length;
-  ctx.fillStyle = alive > 0 ? '#44ff88' : '#ff4444';
-  ctx.textAlign = 'right';
-  ctx.fillText('Convoy: ' + alive + '/' + game.totalConvoy, W - 10, 24);
-
-  // Skill bar at bottom
+  // Skill bar at bottom - larger on mobile
   const skillKeys = Object.keys(SKILLS);
-  const skBarY = H - 40;
+  const skBtnW = isMobile ? 160 : 120;
+  const skBtnH = isMobile ? 50 : 30;
+  const skBarY = H - (isMobile ? 58 : 40);
+  const skGap = isMobile ? 170 : 130;
+  const skStartX = isMobile ? Math.floor((W - skillKeys.length * skGap) / 2) : 10;
+
   for (let i = 0; i < skillKeys.length; i++) {
     const sk = SKILLS[skillKeys[i]];
     const cd = game.skillCooldowns[skillKeys[i]];
     const locked = game.wave < sk.unlockWave;
-    const bx = 10 + i * 130;
+    const bx = skStartX + i * skGap;
     ctx.fillStyle = locked ? 'rgba(30,30,30,0.7)' : cd > 0 ? 'rgba(40,20,20,0.7)' : 'rgba(20,40,20,0.7)';
-    ctx.fillRect(bx, skBarY, 120, 30);
+    ctx.fillRect(bx, skBarY, skBtnW, skBtnH);
     ctx.strokeStyle = locked ? '#333' : cd > 0 ? '#663333' : '#44aa66';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(bx, skBarY, 120, 30);
+    ctx.lineWidth = isMobile ? 2 : 1;
+    ctx.strokeRect(bx, skBarY, skBtnW, skBtnH);
     ctx.fillStyle = locked ? '#555' : cd > 0 ? '#aa6644' : '#ffffff';
-    ctx.font = 'bold 11px Segoe UI';
-    ctx.textAlign = 'left';
-    ctx.fillText('[' + sk.key + '] ' + sk.name, bx + 5, skBarY + 13);
-    ctx.font = '9px Segoe UI';
+    ctx.font = isMobile ? 'bold 16px Segoe UI' : 'bold 11px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('[' + sk.key + '] ' + sk.name, bx + skBtnW / 2, skBarY + (isMobile ? 22 : 13));
+    ctx.font = isMobile ? '13px Segoe UI' : '9px Segoe UI';
     ctx.fillStyle = locked ? '#444' : cd > 0 ? '#ff8844' : '#88ff88';
-    ctx.fillText(locked ? 'Wave ' + sk.unlockWave : cd > 0 ? Math.ceil(cd) + 's' : 'Ready', bx + 5, skBarY + 25);
+    ctx.fillText(locked ? 'Wave ' + sk.unlockWave : cd > 0 ? Math.ceil(cd) + 's' : 'Ready', bx + skBtnW / 2, skBarY + (isMobile ? 40 : 25));
     if (cd > 0 && !locked) {
       const ratio = cd / sk.cooldown;
       ctx.fillStyle = 'rgba(255,100,50,0.2)';
-      ctx.fillRect(bx, skBarY, 120 * ratio, 30);
+      ctx.fillRect(bx, skBarY, skBtnW * ratio, skBtnH);
     }
   }
 }
@@ -2041,11 +2080,11 @@ function drawShop() {
 
   // Title
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 28px Segoe UI';
+  ctx.font = isMobile ? 'bold 34px Segoe UI' : 'bold 28px Segoe UI';
   ctx.textAlign = 'center';
   ctx.fillText('MISSION COMMAND', W / 2, 40);
 
-  ctx.font = '14px Segoe UI';
+  ctx.font = isMobile ? '17px Segoe UI' : '14px Segoe UI';
   ctx.fillStyle = '#aaaaaa';
   ctx.fillText('Wave ' + game.wave + ' Complete | Gold: ' + game.gold + ' | Score: ' + game.score, W / 2, 65);
 
@@ -2059,8 +2098,8 @@ function drawShop() {
     { id: 'market', label: 'Black Market' },
   ];
 
-  const tabW = 140;
-  const tabH = 32;
+  const tabW = isMobile ? 145 : 140;
+  const tabH = isMobile ? 40 : 32;
   const tabY = 85;
   const tabStartX = W / 2 - (tabs.length * tabW) / 2;
 
@@ -2073,12 +2112,12 @@ function drawShop() {
     ctx.lineWidth = 1;
     ctx.strokeRect(tx, tabY, tabW - 4, tabH);
     ctx.fillStyle = active ? '#ffffff' : '#888888';
-    ctx.font = '12px Segoe UI';
+    ctx.font = isMobile ? 'bold 14px Segoe UI' : '12px Segoe UI';
     ctx.textAlign = 'center';
-    ctx.fillText(tabs[i].label, tx + (tabW - 4) / 2, tabY + 21);
+    ctx.fillText(tabs[i].label, tx + (tabW - 4) / 2, tabY + (isMobile ? 26 : 21));
   }
 
-  const contentY = 130;
+  const contentY = isMobile ? 140 : 130;
 
   if (game.shopTab === 'buy') {
     drawShopBuy(contentY);
@@ -2099,7 +2138,7 @@ function drawShop() {
 
   // Fleet display
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = '11px Segoe UI';
+  ctx.font = isMobile ? '14px Segoe UI' : '11px Segoe UI';
   ctx.textAlign = 'center';
   const fleetText = game.escortShips.length === 0
     ? 'Your Fleet: EMPTY (free Patrol Boat on farm/battle)'
@@ -2133,12 +2172,12 @@ function drawShop() {
   ctx.lineWidth = 2;
   ctx.strokeRect(nextBtnX, nextBtnY, nextBtnW, nextBtnH);
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 15px Segoe UI';
+  ctx.font = isMobile ? 'bold 18px Segoe UI' : 'bold 15px Segoe UI';
   ctx.textAlign = 'center';
   if (game.waveFailed) {
     ctx.fillText('RETRY WAVE ' + nextWave, nextBtnX + nextBtnW / 2, nextBtnY + 18);
     ctx.fillStyle = '#ffaa88';
-    ctx.font = '10px Segoe UI';
+    ctx.font = isMobile ? '12px Segoe UI' : '10px Segoe UI';
     ctx.fillText('Full rewards', nextBtnX + nextBtnW / 2, nextBtnY + 33);
   } else {
     ctx.fillText('WAVE ' + nextWave + ' >>', nextBtnX + nextBtnW / 2, nextBtnY + 27);
@@ -2150,7 +2189,7 @@ function drawShop() {
   const farmH = 42;
 
   ctx.fillStyle = '#aabbcc';
-  ctx.font = 'bold 11px Segoe UI';
+  ctx.font = isMobile ? 'bold 14px Segoe UI' : 'bold 11px Segoe UI';
   ctx.textAlign = 'left';
   ctx.fillText('FARM GOLD (50% rewards):', farmX, farmY - 5);
 
@@ -2679,8 +2718,8 @@ function drawShopMarket(startY) {
 function handleShopClick(mx, my) {
   // Tab clicks
   const tabs = ['buy', 'upgrade', 'slots', 'sell', 'missiles', 'market'];
-  const tabW = 140;
-  const tabH = 32;
+  const tabW = isMobile ? 145 : 140;
+  const tabH = isMobile ? 40 : 32;
   const tabY = 85;
   const tabStartX = W / 2 - (tabs.length * tabW) / 2;
   for (let i = 0; i < tabs.length; i++) {
@@ -2896,12 +2935,16 @@ function handleShopClick(mx, my) {
 
 // ============== GAME CLICK ==============
 function handleGameClick(mx, my) {
-  // Skill buttons (tap on mobile)
-  const skBarY = H - 40;
+  // Skill buttons (tap on mobile) - match drawHUD sizes
+  const skBtnW = isMobile ? 160 : 120;
+  const skBtnH = isMobile ? 50 : 30;
+  const skBarY = H - (isMobile ? 58 : 40);
+  const skGap = isMobile ? 170 : 130;
   const skillKeys = Object.keys(SKILLS);
+  const skStartX = isMobile ? Math.floor((W - skillKeys.length * skGap) / 2) : 10;
   for (let i = 0; i < skillKeys.length; i++) {
-    const bx = 10 + i * 130;
-    if (mx >= bx && mx <= bx + 120 && my >= skBarY && my <= skBarY + 30) {
+    const bx = skStartX + i * skGap;
+    if (mx >= bx && mx <= bx + skBtnW && my >= skBarY && my <= skBarY + skBtnH) {
       const id = skillKeys[i];
       const sk = SKILLS[id];
       if (game.wave >= sk.unlockWave && game.skillCooldowns[id] <= 0) {
@@ -2944,33 +2987,37 @@ function drawMenu() {
   ctx.fillRect(0, 0, W, H);
 
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 48px Segoe UI';
+  ctx.font = isMobile ? 'bold 56px Segoe UI' : 'bold 48px Segoe UI';
   ctx.textAlign = 'center';
-  ctx.fillText('HORMUZ WAR', W / 2, 200);
+  ctx.fillText('HORMUZ WAR', W / 2, 180);
 
   ctx.fillStyle = '#88bbdd';
-  ctx.font = '20px Segoe UI';
-  ctx.fillText('Naval Escort Commander', W / 2, 240);
+  ctx.font = isMobile ? '24px Segoe UI' : '20px Segoe UI';
+  ctx.fillText('Naval Escort Commander', W / 2, 220);
 
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = '14px Segoe UI';
-  ctx.fillText('Protect the convoy through the Strait of Hormuz', W / 2, 280);
-  ctx.fillText('Your escort ships fight automatically in formation', W / 2, 305);
-  ctx.fillText('Tap/Click to intercept incoming missiles', W / 2, 330);
-  ctx.fillText('Tap skill buttons or press 1/2/3 for special skills', W / 2, 355);
-  ctx.fillText('Weather changes each wave | Earn achievements for gold', W / 2, 380);
+  ctx.font = isMobile ? '17px Segoe UI' : '14px Segoe UI';
+  const lineH = isMobile ? 30 : 25;
+  const startTextY = isMobile ? 270 : 280;
+  ctx.fillText('Protect the convoy through the Strait of Hormuz', W / 2, startTextY);
+  ctx.fillText('Your escort ships fight automatically in formation', W / 2, startTextY + lineH);
+  ctx.fillText('Tap to intercept incoming missiles', W / 2, startTextY + lineH * 2);
+  ctx.fillText('Tap skill buttons for special abilities', W / 2, startTextY + lineH * 3);
+  ctx.fillText('Weather changes each wave | Earn achievements', W / 2, startTextY + lineH * 4);
 
-  // Start button
-  const btnX = W / 2 - 100;
-  const btnY = 440;
+  // Start button - larger on mobile
+  const btnW = isMobile ? 260 : 200;
+  const btnH = isMobile ? 60 : 50;
+  const btnX = W / 2 - btnW / 2;
+  const btnY = isMobile ? 450 : 440;
   ctx.fillStyle = '#1a4a2a';
-  ctx.fillRect(btnX, btnY, 200, 50);
+  ctx.fillRect(btnX, btnY, btnW, btnH);
   ctx.strokeStyle = '#44ff66';
   ctx.lineWidth = 2;
-  ctx.strokeRect(btnX, btnY, 200, 50);
+  ctx.strokeRect(btnX, btnY, btnW, btnH);
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 20px Segoe UI';
-  ctx.fillText('START GAME', W / 2, btnY + 33);
+  ctx.font = isMobile ? 'bold 26px Segoe UI' : 'bold 20px Segoe UI';
+  ctx.fillText('START GAME', W / 2, btnY + btnH * 0.65);
 
   ctx.fillStyle = '#666666';
   ctx.font = '12px Segoe UI';
@@ -3078,9 +3125,12 @@ canvas.addEventListener('click', e => {
 
   initAudio();
   if (game.state === 'MENU') {
-    const btnX = W / 2 - 100;
-    const btnY = 440;
-    if (mx >= btnX && mx <= btnX + 200 && my >= btnY && my <= btnY + 50) {
+    const btnW = isMobile ? 260 : 200;
+    const btnH = isMobile ? 60 : 50;
+    const btnX = W / 2 - btnW / 2;
+    const btnY = isMobile ? 450 : 440;
+    if (mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH) {
+      if (isMobile) requestFullscreen();
       startNewGame();
     }
   } else if (game.state === 'PLAYING') {
@@ -3207,7 +3257,7 @@ function gameLoop(timestamp) {
     for (const ft of game.floatingTexts) {
       ctx.globalAlpha = Math.min(1, ft.life);
       ctx.fillStyle = ft.color;
-      ctx.font = 'bold 13px Segoe UI';
+      ctx.font = isMobile ? 'bold 18px Segoe UI' : 'bold 13px Segoe UI';
       ctx.textAlign = 'center';
       ctx.fillText(ft.text, ft.x, ft.y);
     }
