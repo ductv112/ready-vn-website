@@ -1,0 +1,3314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="screen-orientation" content="landscape">
+<title>Hormuz War - Naval Escort Commander</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  background: #0a0a1a;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+canvas {
+  border: 2px solid #1a3a5c;
+  box-shadow: 0 0 30px rgba(0,100,200,0.3);
+  cursor: default;
+  touch-action: none;
+}
+#game-over-screen {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.95); padding: 20px; border: 2px solid #ff4444;
+  box-shadow: 0 0 30px rgba(255, 68, 68, 0.4); color: #fff; text-align: center;
+  display: none; z-index: 500; width: 90%; max-width: 420px; border-radius: 15px;
+  box-sizing: border-box; max-height: 90vh; overflow-y: auto;
+}
+#game-over-screen h1 { color: #ff4444; font-size: 28px; margin: 0 0 10px; text-shadow: 0 0 10px #f00; }
+#final-score { font-size: 22px; color: #ffd700; margin-bottom: 5px; }
+#final-stats { font-size: 14px; color: #aaa; margin-bottom: 12px; }
+.hw-leaderboard { margin: 10px 0; text-align: left; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+.hw-leaderboard h3 { margin-top: 0; color: #0ff; text-align: center; border-bottom: 1px solid #333; padding-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+.hw-leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 140px; overflow-y: auto; }
+.hw-leaderboard-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #222; font-size: 13px; }
+.hw-leaderboard-item:last-child { border-bottom: none; }
+.hw-leaderboard-item .name { color: #fff; flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+.hw-leaderboard-item .points { color: #0ff; font-weight: bold; min-width: 50px; text-align: right; }
+.hw-save-form { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.hw-save-form input { padding: 10px; border: 1px solid #333; border-radius: 5px; background: #1a1a2e; color: #fff; font-size: 14px; text-align: center; text-transform: uppercase; }
+.hw-save-form input:focus { border-color: #0ff; outline: none; }
+.hw-save-form button { padding: 10px; border: 2px solid #0ff; border-radius: 5px; background: transparent; color: #0ff; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+.hw-save-form button:hover { background: #0ff; color: #000; }
+.hw-btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+.hw-btn-row button { flex: 1; padding: 10px; border: 2px solid #44ff66; border-radius: 5px; background: transparent; color: #44ff66; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+.hw-btn-row button:hover { background: #44ff66; color: #000; }
+.hw-btn-row button.games-btn { border-color: #0ff; color: #0ff; }
+.hw-btn-row button.games-btn:hover { background: #0ff; color: #000; }
+#rotate-hint {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #0a0a1a;
+  color: #88bbdd;
+  font-size: 20px;
+  z-index: 9999;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+#rotate-hint .icon {
+  font-size: 60px;
+  animation: rotateHint 2s ease-in-out infinite;
+}
+@keyframes rotateHint {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }
+}
+@media (orientation: portrait) and (max-width: 900px) {
+  #rotate-hint { display: flex; }
+  canvas { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="rotate-hint">
+  <div class="icon">📱</div>
+  <div>Please rotate your device</div>
+  <div style="font-size:14px;color:#667788">This game is best played in landscape mode</div>
+</div>
+<canvas id="gameCanvas" width="900" height="700"></canvas>
+
+<div id="game-over-screen">
+  <h1>MISSION FAILED</h1>
+  <div id="final-score">SCORE: 0</div>
+  <div id="final-stats"></div>
+  <div class="hw-leaderboard">
+    <h3>BẢNG XẾP HẠNG READY</h3>
+    <ul id="hw-leaderboard-list" class="hw-leaderboard-list"></ul>
+  </div>
+  <div id="hw-save-section" class="hw-save-form">
+    <input type="text" id="hw-player-name" placeholder="TÊN ANH EM..." maxlength="15">
+    <button id="hw-save-btn">GHI DANH BẢNG VÀNG</button>
+  </div>
+  <div class="hw-btn-row">
+    <button onclick="closeGameOverAndRestart()">CHƠI LẠI</button>
+    <button class="games-btn" onclick="location.href='../../games.html'">GAMES</button>
+  </div>
+</div>
+<script>
+"use strict";
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = 900, H = 700;
+
+// ============== MOBILE / RESPONSIVE ==============
+const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight;
+  const scale = Math.min(maxW / W, maxH / H);
+  canvas.style.width = Math.floor(W * scale) + 'px';
+  canvas.style.height = Math.floor(H * scale) + 'px';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function getTouchPos(touch) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (touch.clientX - rect.left) * (W / rect.width),
+    y: (touch.clientY - rect.top) * (H / rect.height)
+  };
+}
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  initAudio();
+  const pos = getTouchPos(e.touches[0]);
+  game.mouseX = pos.x;
+  game.mouseY = pos.y;
+  // Simulate click
+  const clickEvent = new MouseEvent('click', {
+    clientX: e.touches[0].clientX,
+    clientY: e.touches[0].clientY
+  });
+  canvas.dispatchEvent(clickEvent);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const pos = getTouchPos(e.touches[0]);
+  game.mouseX = pos.x;
+  game.mouseY = pos.y;
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+}, { passive: false });
+
+// Prevent all default touch behaviors on document
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+// ============== AUDIO ==============
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playSound(type) {
+  if (!audioCtx) return;
+  try {
+    const now = audioCtx.currentTime;
+    if (type === 'shoot') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } else if (type === 'explosion') {
+      const bufSize = audioCtx.sampleRate * 0.2;
+      const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+      const src = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+      src.buffer = buf;
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      src.connect(gain).connect(audioCtx.destination);
+      src.start(now);
+    } else if (type === 'intercept') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(400, now + 0.15);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else if (type === 'buy') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523, now);
+      osc.frequency.setValueAtTime(659, now + 0.08);
+      osc.frequency.setValueAtTime(784, now + 0.16);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    } else if (type === 'warning') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.setValueAtTime(880, now + 0.1);
+      osc.frequency.setValueAtTime(440, now + 0.2);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'skill') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    }
+  } catch(e) {}
+}
+
+// ============== UTILITY ==============
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, mn, mx) { return Math.max(mn, Math.min(mx, v)); }
+function rand(a, b) { return Math.random() * (b - a) + a; }
+function randInt(a, b) { return Math.floor(rand(a, b + 1)); }
+function angleTo(a, b) { return Math.atan2(b.y - a.y, b.x - a.x); }
+
+// ============== CONSTANTS ==============
+const SHIP_TYPES = {
+  patrol: { name: 'Patrol Boat', cost: 100, speed: 3.5, hp: 100, damage: 8, fireRate: 0.4, range: 180, color: '#2d8a4e', size: 12, tier: 1 },
+  frigate: { name: 'Frigate', cost: 500, speed: 2.8, hp: 250, damage: 15, fireRate: 0.55, range: 220, color: '#1e6b3a', size: 16, tier: 2 },
+  destroyer: { name: 'Destroyer', cost: 1500, speed: 2.2, hp: 500, damage: 30, fireRate: 0.7, range: 280, color: '#0f5c2e', size: 22, tier: 3 },
+  cruiser: { name: 'Cruiser', cost: 5000, speed: 1.8, hp: 1000, damage: 55, fireRate: 1.0, range: 350, color: '#0a4420', size: 28, tier: 4 },
+};
+
+const ENEMY_DEFS = {
+  speedboat: { name: 'Speed Boat', speed: 3.2, hp: 40, damage: 5, fireRate: 0.8, range: 120, color: '#cc3333', size: 10, gold: 15, minWave: 1 },
+  gunboat: { name: 'Gunboat', speed: 2.2, hp: 100, damage: 12, fireRate: 0.6, range: 160, color: '#aa2222', size: 14, gold: 30, minWave: 2 },
+  drone: { name: 'Drone', speed: 4.0, hp: 25, damage: 8, fireRate: 0.5, range: 100, color: '#dd5555', size: 8, gold: 40, minWave: 3 },
+  mine: { name: 'Mine', speed: 0, hp: 30, damage: 80, fireRate: 0, range: 40, color: '#666666', size: 10, gold: 20, minWave: 4 },
+  enemyDestroyer: { name: 'Enemy Destroyer', speed: 1.4, hp: 300, damage: 25, fireRate: 0.8, range: 220, color: '#881111', size: 22, gold: 80, minWave: 5 },
+  boss: { name: 'Boss Ship', speed: 1.0, hp: 800, damage: 40, fireRate: 0.5, range: 280, color: '#ff0000', size: 32, gold: 200, minWave: 5 },
+};
+
+const CONVOY_DEFS = {
+  tanker: { name: 'Oil Tanker', speed: 0.2, hp: 400, color: '#4477aa', size: 30, goldBonus: 200 },
+  cargo: { name: 'Cargo Ship', speed: 0.25, hp: 300, color: '#6688aa', size: 24, goldBonus: 150 },
+};
+
+const SLOT_UPGRADES = [
+  { slot: 4, waveReq: 5, cost: 1000 },
+  { slot: 5, waveReq: 8, cost: 2000 },
+  { slot: 6, waveReq: 12, cost: 4000 },
+  { slot: 7, waveReq: 16, cost: 8000 },
+  { slot: 8, waveReq: 20, cost: 15000 },
+];
+
+const UPGRADE_DEFS = {
+  hull: { name: 'Hull Armor', desc: '+50 HP per level', baseCost: 100, maxLevel: 5 },
+  damage: { name: 'Weapon Damage', desc: '+25% per level', baseCost: 150, maxLevel: 5 },
+  fireRate: { name: 'Fire Rate', desc: '+20% per level', baseCost: 120, maxLevel: 5 },
+  range: { name: 'Attack Range', desc: '+15% per level', baseCost: 100, maxLevel: 5 },
+};
+
+// ============== AMMO TYPES ==============
+const AMMO_TYPES = {
+  standard: { name: 'Standard', damageMulti: 1.0, speedMulti: 1.0, color: '#44ff66', cost: 0, desc: 'Balanced ammo' },
+  ap: { name: 'Armor-Piercing', damageMulti: 1.5, speedMulti: 0.85, color: '#88aaff', cost: 200, desc: '+50% dmg, -15% fire rate' },
+  explosive: { name: 'Explosive', damageMulti: 0.8, speedMulti: 1.0, color: '#ffaa44', cost: 250, desc: '-20% dmg, splash damage', splash: 60 },
+};
+
+// ============== WEATHER ==============
+const WEATHER_TYPES = {
+  clear: { name: 'Clear', rangeMulti: 1.0, speedMulti: 1.0, overlay: null },
+  fog: { name: 'Fog', rangeMulti: 0.6, speedMulti: 0.9, overlay: 'rgba(180,200,220,0.25)' },
+  storm: { name: 'Storm', rangeMulti: 0.8, speedMulti: 0.85, overlay: 'rgba(20,20,40,0.3)' },
+  night: { name: 'Night', rangeMulti: 0.7, speedMulti: 1.0, overlay: 'rgba(0,0,30,0.45)' },
+};
+
+function getRandomWeather() {
+  const types = Object.keys(WEATHER_TYPES);
+  const weights = [40, 25, 20, 15]; // clear more common
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < types.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return types[i];
+  }
+  return 'clear';
+}
+
+// ============== SKILLS ==============
+const SKILLS = {
+  airstrike: { name: 'Air Strike', key: '1', cooldown: 30, desc: 'Bomb all enemies for 80 damage', unlockWave: 3 },
+  repair: { name: 'Repair Drone', key: '2', cooldown: 25, desc: 'Heal all ships for 100 HP', unlockWave: 1 },
+  emp: { name: 'EMP Blast', key: '3', cooldown: 35, desc: 'Stun all enemies for 3s', unlockWave: 5 },
+};
+
+// ============== ACHIEVEMENTS ==============
+const ACHIEVEMENTS = [
+  { id: 'first_blood', name: 'First Blood', desc: 'Destroy first enemy', reward: 50, check: () => game.totalKills >= 1 },
+  { id: 'wave5', name: 'Survivor', desc: 'Reach wave 5', reward: 100, check: () => game.wave >= 5 },
+  { id: 'wave10', name: 'Veteran', desc: 'Reach wave 10', reward: 200, check: () => game.wave >= 10 },
+  { id: 'wave20', name: 'Admiral', desc: 'Reach wave 20', reward: 500, check: () => game.wave >= 20 },
+  { id: 'fleet5', name: 'Fleet Commander', desc: 'Own 5 ships at once', reward: 150, check: () => game.escortShips.length >= 5 },
+  { id: 'rich', name: 'War Profiteer', desc: 'Accumulate 5000 gold', reward: 200, check: () => game.gold >= 5000 },
+  { id: 'intercept5', name: 'Iron Dome', desc: 'Intercept 5 missiles total', reward: 100, check: () => game.totalIntercepts >= 5 },
+  { id: 'perfect', name: 'Perfect Escort', desc: 'Complete a wave with all convoy alive', reward: 150, check: () => game.hadPerfectWave },
+  { id: 'kills50', name: 'Destroyer', desc: 'Destroy 50 enemies total', reward: 200, check: () => game.totalKills >= 50 },
+  { id: 'boss_kill', name: 'Boss Slayer', desc: 'Destroy a boss ship', reward: 300, check: () => game.bossKills >= 1 },
+];
+
+// ============== GAME STATE ==============
+const game = {
+  state: 'MENU',
+  gold: 300,
+  score: 0,
+  wave: 0,
+  time: 0,
+  dt: 0,
+  escortShips: [],
+  convoyShips: [],
+  enemies: [],
+  projectiles: [],
+  explosions: [],
+  floatingTexts: [],
+  particles: [],
+  missiles: [],
+  missileWarnings: [],
+  interceptorMissiles: 5,
+  maxSlots: 3,
+  failedWaves: 0,
+  maxFails: 3,
+  waveTimer: 0,
+  waveEnemiesLeft: 0,
+  waveSpawnTimer: 0,
+  waveSpawnQueue: [],
+  waveComplete: false,
+  waveCompleteTimer: 0,
+  waveFailed: false,
+  notification: null,
+  notificationTimer: 0,
+  mouseX: 0,
+  mouseY: 0,
+  waterOffset: 0,
+  totalConvoy: 0,
+  survivedConvoy: 0,
+  waveGoldEarned: 0,
+  missileTimer: 0,
+  missileNearCursor: false,
+  noInterceptorTimer: 0,
+  shopTab: 'buy',
+  shopSelectedShip: -1,
+  retryAvailable: false,
+  lastWaveConfig: null,
+  weather: 'clear',
+  raindrops: [],
+  lightning: 0,
+  skillCooldowns: { airstrike: 0, repair: 0, emp: 0 },
+  empActive: 0,
+  totalKills: 0,
+  totalIntercepts: 0,
+  hadPerfectWave: false,
+  bossKills: 0,
+  unlockedAchievements: new Set(),
+  achievementPopup: null,
+  achievementPopupTimer: 0,
+  blackMarketOffers: [],
+  replayGoldMulti: 1.0,
+  isReplay: false,
+  replayReturnWave: 0,
+  highestCompletedWave: 0,
+  selectedFarmWave: 0,
+  replayWasFailed: false,
+};
+
+// ============== CLASSES ==============
+class EscortShip {
+  constructor(type) {
+    const def = SHIP_TYPES[type];
+    this.type = type;
+    this.name = def.name;
+    this.x = W / 2;
+    this.y = H / 2;
+    this.baseSpeed = def.speed;
+    this.baseHp = def.hp;
+    this.baseDamage = def.damage;
+    this.baseFireRate = def.fireRate;
+    this.baseRange = def.range;
+    this.color = def.color;
+    this.size = def.size;
+    this.cost = def.cost;
+    this.tier = def.tier;
+    this.upgrades = { hull: 0, damage: 0, fireRate: 0, range: 0 };
+    this.totalInvested = def.cost;
+    this.hp = this.getMaxHp();
+    this.maxHp = this.hp;
+    this.fireCooldown = 0;
+    this.angle = -Math.PI / 2;
+    this.targetX = this.x;
+    this.targetY = this.y;
+    this.id = Math.random().toString(36).substr(2, 9);
+    this.wake = [];
+    this.ammo = 'standard';
+  }
+  getMaxHp() { return this.baseHp + this.upgrades.hull * 50; }
+  getDamage() { return this.baseDamage * (1 + this.upgrades.damage * 0.25) * AMMO_TYPES[this.ammo].damageMulti; }
+  getFireRate() { return this.baseFireRate / (1 + this.upgrades.fireRate * 0.20) / AMMO_TYPES[this.ammo].speedMulti; }
+  getRange() { return this.baseRange * (1 + this.upgrades.range * 0.15) * WEATHER_TYPES[game.weather].rangeMulti; }
+  getSpeed() { return this.baseSpeed * WEATHER_TYPES[game.weather].speedMulti; }
+  getUpgradeCost(upgradeType) {
+    const def = UPGRADE_DEFS[upgradeType];
+    return def.baseCost * Math.pow(2, this.upgrades[upgradeType]);
+  }
+  applyUpgrade(upgradeType) {
+    const cost = this.getUpgradeCost(upgradeType);
+    this.upgrades[upgradeType]++;
+    this.totalInvested += cost;
+    this.maxHp = this.getMaxHp();
+    this.hp = Math.min(this.hp + 50, this.maxHp);
+    return cost;
+  }
+  getSellPrice() { return Math.floor(this.totalInvested * 0.4); }
+  update(dt) {
+    const dx = this.targetX - this.x;
+    const dy = this.targetY - this.y;
+    const d = Math.hypot(dx, dy);
+    if (d > 3) {
+      const speed = this.getSpeed() * 60 * dt;
+      const move = Math.min(speed, d);
+      this.x += (dx / d) * move;
+      this.y += (dy / d) * move;
+      this.angle = Math.atan2(dy, dx);
+    }
+    this.x = clamp(this.x, this.size, W - this.size);
+    this.y = clamp(this.y, this.size, H - this.size);
+    if (this.fireCooldown > 0) this.fireCooldown -= dt;
+    // Wake trail
+    this.wake.push({ x: this.x, y: this.y, life: 1.0 });
+    if (this.wake.length > 12) this.wake.shift();
+    for (const w of this.wake) w.life -= dt * 1.2;
+  }
+  tryFire(enemies) {
+    if (this.fireCooldown > 0) return;
+    const range = this.getRange();
+    let nearest = null;
+    let nearDist = Infinity;
+    for (const e of enemies) {
+      const d = dist(this, e);
+      if (d < range && d < nearDist) {
+        nearest = e;
+        nearDist = d;
+      }
+    }
+    if (nearest) {
+      this.fireCooldown = this.getFireRate();
+      this.angle = angleTo(this, nearest);
+      const ammoInfo = AMMO_TYPES[this.ammo];
+      const proj = new Projectile(this.x, this.y, nearest, this.getDamage(), ammoInfo.color, true);
+      proj.splash = ammoInfo.splash || 0;
+      game.projectiles.push(proj);
+      playSound('shoot');
+    }
+  }
+  draw() {
+    drawWake(this.wake, this.size);
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle + Math.PI / 2);
+    const s = this.size;
+    if (this.type === 'patrol') {
+      // Small fast boat - sleek hull
+      ctx.fillStyle = '#1a3a2a';
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 1.1);
+      ctx.quadraticCurveTo(s * 0.5, -s * 0.4, s * 0.4, s * 0.7);
+      ctx.lineTo(-s * 0.4, s * 0.7);
+      ctx.quadraticCurveTo(-s * 0.5, -s * 0.4, 0, -s * 1.1);
+      ctx.fill();
+      ctx.strokeStyle = '#3a7a4a';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Deck
+      ctx.fillStyle = '#2a5a3a';
+      ctx.fillRect(-s * 0.25, -s * 0.3, s * 0.5, s * 0.6);
+      // Bridge
+      ctx.fillStyle = '#4a8a5a';
+      ctx.fillRect(-s * 0.15, -s * 0.15, s * 0.3, s * 0.25);
+      // Gun turret
+      ctx.fillStyle = '#667766';
+      ctx.beginPath();
+      ctx.arc(0, -s * 0.5, s * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-s * 0.03, -s * 0.85, s * 0.06, s * 0.35);
+    } else if (this.type === 'frigate') {
+      // Medium warship with wider hull
+      ctx.fillStyle = '#1a3a2a';
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 1.15);
+      ctx.quadraticCurveTo(s * 0.55, -s * 0.3, s * 0.45, s * 0.6);
+      ctx.lineTo(s * 0.35, s * 0.75);
+      ctx.lineTo(-s * 0.35, s * 0.75);
+      ctx.lineTo(-s * 0.45, s * 0.6);
+      ctx.quadraticCurveTo(-s * 0.55, -s * 0.3, 0, -s * 1.15);
+      ctx.fill();
+      ctx.strokeStyle = '#3a7a4a';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Deck
+      ctx.fillStyle = '#2a5a3a';
+      ctx.fillRect(-s * 0.3, -s * 0.4, s * 0.6, s * 0.8);
+      // Bridge tower
+      ctx.fillStyle = '#4a8a5a';
+      ctx.fillRect(-s * 0.18, -s * 0.1, s * 0.36, s * 0.35);
+      ctx.fillStyle = '#5aaa6a';
+      ctx.fillRect(-s * 0.12, 0, s * 0.24, s * 0.15);
+      // Fore turret
+      ctx.fillStyle = '#667766';
+      ctx.beginPath();
+      ctx.arc(0, -s * 0.6, s * 0.14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-s * 0.04, -s * 0.95, s * 0.08, s * 0.35);
+      // Aft turret
+      ctx.beginPath();
+      ctx.arc(0, s * 0.45, s * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.type === 'destroyer') {
+      // Large warship
+      ctx.fillStyle = '#122a1a';
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 1.2);
+      ctx.quadraticCurveTo(s * 0.55, -s * 0.4, s * 0.5, s * 0.5);
+      ctx.lineTo(s * 0.4, s * 0.8);
+      ctx.lineTo(-s * 0.4, s * 0.8);
+      ctx.lineTo(-s * 0.5, s * 0.5);
+      ctx.quadraticCurveTo(-s * 0.55, -s * 0.4, 0, -s * 1.2);
+      ctx.fill();
+      ctx.strokeStyle = '#3a6a4a';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Deck detail
+      ctx.fillStyle = '#1a4a2a';
+      ctx.fillRect(-s * 0.35, -s * 0.5, s * 0.7, s * 1.0);
+      // Bridge superstructure
+      ctx.fillStyle = '#3a7a4a';
+      ctx.fillRect(-s * 0.22, -s * 0.15, s * 0.44, s * 0.45);
+      ctx.fillStyle = '#4a9a5a';
+      ctx.fillRect(-s * 0.15, 0, s * 0.3, s * 0.2);
+      // Mast/antenna
+      ctx.strokeStyle = '#8ab88a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 0.15);
+      ctx.lineTo(0, -s * 0.35);
+      ctx.stroke();
+      // Two turrets
+      ctx.fillStyle = '#556655';
+      ctx.beginPath();
+      ctx.arc(0, -s * 0.7, s * 0.16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-s * 0.04, -s * 1.05, s * 0.08, s * 0.35);
+      ctx.beginPath();
+      ctx.arc(0, s * 0.55, s * 0.14, 0, Math.PI * 2);
+      ctx.fill();
+      // Missile launchers
+      ctx.fillStyle = '#445544';
+      ctx.fillRect(-s * 0.3, -s * 0.45, s * 0.12, s * 0.18);
+      ctx.fillRect(s * 0.18, -s * 0.45, s * 0.12, s * 0.18);
+    } else if (this.type === 'cruiser') {
+      // Massive warship
+      ctx.fillStyle = '#0a2210';
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 1.2);
+      ctx.quadraticCurveTo(s * 0.6, -s * 0.4, s * 0.55, s * 0.5);
+      ctx.lineTo(s * 0.45, s * 0.85);
+      ctx.lineTo(-s * 0.45, s * 0.85);
+      ctx.lineTo(-s * 0.55, s * 0.5);
+      ctx.quadraticCurveTo(-s * 0.6, -s * 0.4, 0, -s * 1.2);
+      ctx.fill();
+      ctx.strokeStyle = '#3a5a3a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // Wide deck
+      ctx.fillStyle = '#1a3a1a';
+      ctx.fillRect(-s * 0.4, -s * 0.55, s * 0.8, s * 1.1);
+      // Large bridge
+      ctx.fillStyle = '#2a5a2a';
+      ctx.fillRect(-s * 0.28, -s * 0.2, s * 0.56, s * 0.55);
+      ctx.fillStyle = '#3a7a3a';
+      ctx.fillRect(-s * 0.2, -s * 0.05, s * 0.4, s * 0.3);
+      // Radar dome
+      ctx.fillStyle = '#5a8a5a';
+      ctx.beginPath();
+      ctx.arc(0, -s * 0.05, s * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+      // Triple turrets
+      ctx.fillStyle = '#445544';
+      ctx.beginPath();
+      ctx.arc(0, -s * 0.75, s * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-s * 0.06, -s * 1.15, s * 0.12, s * 0.4);
+      ctx.beginPath();
+      ctx.arc(-s * 0.15, s * 0.55, s * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(s * 0.15, s * 0.55, s * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+      // VLS cells
+      ctx.fillStyle = '#334433';
+      ctx.fillRect(-s * 0.35, -s * 0.5, s * 0.14, s * 0.22);
+      ctx.fillRect(s * 0.21, -s * 0.5, s * 0.14, s * 0.22);
+      // Helipad hint
+      ctx.strokeStyle = 'rgba(100,200,100,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0, s * 0.7, s * 0.15, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+    this.drawHpBar();
+  }
+  drawHpBar() {
+    const bw = this.size * 1.5;
+    const bh = 3;
+    const bx = this.x - bw / 2;
+    const by = this.y - this.size - 6;
+    ctx.fillStyle = '#333';
+    ctx.fillRect(bx, by, bw, bh);
+    const ratio = this.hp / this.maxHp;
+    ctx.fillStyle = ratio > 0.5 ? '#44ff44' : ratio > 0.25 ? '#ffaa00' : '#ff3333';
+    ctx.fillRect(bx, by, bw * ratio, bh);
+  }
+}
+
+class ConvoyShip {
+  constructor(type, x, y) {
+    const def = CONVOY_DEFS[type];
+    this.type = type;
+    this.name = def.name;
+    this.x = x;
+    this.y = y;
+    this.speed = def.speed;
+    this.hp = def.hp;
+    this.maxHp = def.hp;
+    this.color = def.color;
+    this.size = def.size;
+    this.goldBonus = def.goldBonus;
+    this.angle = -Math.PI / 2;
+    this.alive = true;
+    this.wake = [];
+  }
+  update(dt) {
+    this.y -= this.speed * 60 * dt;
+    this.wake.push({ x: this.x, y: this.y, life: 1.0 });
+    if (this.wake.length > 15) this.wake.shift();
+    for (const w of this.wake) w.life -= dt * 0.8;
+  }
+  draw() {
+    drawWake(this.wake, this.size);
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle + Math.PI / 2);
+    const s = this.size;
+    if (this.type === 'tanker') {
+      // Oil Tanker - wide, long hull with cylindrical tanks
+      ctx.fillStyle = '#2a4466';
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 1.15);
+      ctx.quadraticCurveTo(s * 0.5, -s * 0.6, s * 0.48, s * 0.5);
+      ctx.lineTo(s * 0.42, s * 0.85);
+      ctx.lineTo(-s * 0.42, s * 0.85);
+      ctx.lineTo(-s * 0.48, s * 0.5);
+      ctx.quadraticCurveTo(-s * 0.5, -s * 0.6, 0, -s * 1.15);
+      ctx.fill();
+      ctx.strokeStyle = '#5588aa';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Red waterline
+      ctx.strokeStyle = 'rgba(180,60,60,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.46, s * 0.3);
+      ctx.quadraticCurveTo(-s * 0.48, 0, -s * 0.35, -s * 0.7);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(s * 0.46, s * 0.3);
+      ctx.quadraticCurveTo(s * 0.48, 0, s * 0.35, -s * 0.7);
+      ctx.stroke();
+      // Deck
+      ctx.fillStyle = '#3a5a7a';
+      ctx.fillRect(-s * 0.35, -s * 0.6, s * 0.7, s * 1.2);
+      // Oil tank domes (3 cylindrical tanks)
+      ctx.fillStyle = '#4a6a8a';
+      for (let i = 0; i < 3; i++) {
+        const ty = -s * 0.4 + i * s * 0.35;
+        ctx.beginPath();
+        ctx.ellipse(0, ty, s * 0.28, s * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#6a8aaa';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+      // Bridge at stern
+      ctx.fillStyle = '#5a7a9a';
+      ctx.fillRect(-s * 0.2, s * 0.45, s * 0.4, s * 0.3);
+      ctx.fillStyle = '#7a9aba';
+      ctx.fillRect(-s * 0.12, s * 0.5, s * 0.24, s * 0.15);
+      // Smokestack
+      ctx.fillStyle = '#334455';
+      ctx.fillRect(-s * 0.06, s * 0.35, s * 0.12, s * 0.15);
+      ctx.fillStyle = '#ff6633';
+      ctx.fillRect(-s * 0.06, s * 0.35, s * 0.12, s * 0.04);
+    } else {
+      // Cargo Ship - containers on deck
+      ctx.fillStyle = '#4a5a6a';
+      ctx.beginPath();
+      ctx.moveTo(0, -s * 1.1);
+      ctx.quadraticCurveTo(s * 0.45, -s * 0.5, s * 0.42, s * 0.5);
+      ctx.lineTo(s * 0.35, s * 0.8);
+      ctx.lineTo(-s * 0.35, s * 0.8);
+      ctx.lineTo(-s * 0.42, s * 0.5);
+      ctx.quadraticCurveTo(-s * 0.45, -s * 0.5, 0, -s * 1.1);
+      ctx.fill();
+      ctx.strokeStyle = '#7a8a9a';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Deck
+      ctx.fillStyle = '#5a6a7a';
+      ctx.fillRect(-s * 0.3, -s * 0.55, s * 0.6, s * 1.0);
+      // Containers (colorful boxes)
+      const colors = ['#cc4444','#44aa44','#4488cc','#ccaa44','#aa44aa','#44aaaa'];
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 2; col++) {
+          const cx = -s * 0.2 + col * s * 0.22;
+          const cy = -s * 0.45 + row * s * 0.3;
+          ctx.fillStyle = colors[(row * 2 + col) % colors.length];
+          ctx.fillRect(cx, cy, s * 0.18, s * 0.22);
+          ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(cx, cy, s * 0.18, s * 0.22);
+        }
+      }
+      // Bridge at stern
+      ctx.fillStyle = '#6a7a8a';
+      ctx.fillRect(-s * 0.18, s * 0.4, s * 0.36, s * 0.3);
+      ctx.fillStyle = '#8a9aaa';
+      ctx.fillRect(-s * 0.1, s * 0.45, s * 0.2, s * 0.12);
+      // Crane
+      ctx.strokeStyle = '#8899aa';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(s * 0.2, s * 0.1);
+      ctx.lineTo(s * 0.2, -s * 0.15);
+      ctx.lineTo(s * 0.35, -s * 0.05);
+      ctx.stroke();
+    }
+    ctx.restore();
+    const bw = this.size * 1.5;
+    const bh = 4;
+    const bx = this.x - bw / 2;
+    const by = this.y - this.size - 8;
+    ctx.fillStyle = '#333';
+    ctx.fillRect(bx, by, bw, bh);
+    const ratio = this.hp / this.maxHp;
+    ctx.fillStyle = ratio > 0.5 ? '#4488ff' : ratio > 0.25 ? '#ffaa00' : '#ff3333';
+    ctx.fillRect(bx, by, bw * ratio, bh);
+    ctx.fillStyle = '#aaccee';
+    ctx.font = '9px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(this.name, this.x, by - 2);
+  }
+}
+
+class Enemy {
+  constructor(type, x, y) {
+    const def = ENEMY_DEFS[type];
+    this.type = type;
+    this.name = def.name;
+    this.x = x;
+    this.y = y;
+    this.speed = def.speed;
+    this.hp = def.hp;
+    this.maxHp = def.hp;
+    this.damage = def.damage;
+    this.fireRate = def.fireRate;
+    this.range = def.range;
+    this.color = def.color;
+    this.size = def.size;
+    this.gold = def.gold;
+    this.fireCooldown = rand(0, this.fireRate);
+    this.angle = Math.PI / 2;
+    this.isMine = type === 'mine';
+    this.isBoss = type === 'boss';
+    this.isDrone = type === 'drone';
+    this.mineFlash = 0;
+    this.wake = [];
+  }
+  update(dt) {
+    if (this.isMine) {
+      this.mineFlash += dt * 3;
+      return;
+    }
+    if (game.empActive > 0) return; // stunned by EMP
+    let target = null;
+    let minD = Infinity;
+    const targets = this.isDrone ? game.convoyShips : [...game.convoyShips, ...game.escortShips];
+    for (const t of targets) {
+      if (t.hp <= 0) continue;
+      const d = dist(this, t);
+      if (d < minD) { minD = d; target = t; }
+    }
+    if (!target) {
+      for (const c of game.convoyShips) {
+        if (c.hp > 0) { target = c; break; }
+      }
+    }
+    if (target) {
+      const d = dist(this, target);
+      this.angle = angleTo(this, target);
+      if (d > this.range * 0.7) {
+        this.x += Math.cos(this.angle) * this.speed * 60 * dt;
+        this.y += Math.sin(this.angle) * this.speed * 60 * dt;
+      }
+      if (this.fireRate > 0 && d < this.range) {
+        this.fireCooldown -= dt;
+        if (this.fireCooldown <= 0) {
+          this.fireCooldown = this.fireRate;
+          game.projectiles.push(new Projectile(this.x, this.y, target, this.damage, '#ff4444', false));
+        }
+      }
+    }
+    if (this.isMine) {
+      for (const c of game.convoyShips) {
+        if (c.hp > 0 && dist(this, c) < 50) {
+          c.hp -= this.damage;
+          spawnExplosion(this.x, this.y, 30);
+          this.hp = 0;
+          break;
+        }
+      }
+    }
+    this.x = clamp(this.x, -50, W + 50);
+    this.y = clamp(this.y, -50, H + 50);
+    if (!this.isMine) {
+      this.wake.push({ x: this.x, y: this.y, life: 1.0 });
+      if (this.wake.length > 10) this.wake.shift();
+      for (const w of this.wake) w.life -= dt * 1.5;
+    }
+  }
+  draw() {
+    if (!this.isMine) drawWake(this.wake, this.size, true);
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    if (this.isMine) {
+      const flash = Math.sin(this.mineFlash) > 0 ? 1.2 : 1;
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.size * flash, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.arc(0, 0, 3, 0, Math.PI * 2);
+      ctx.fill();
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        ctx.strokeStyle = '#888';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * this.size, Math.sin(a) * this.size);
+        ctx.lineTo(Math.cos(a) * (this.size + 5), Math.sin(a) * (this.size + 5));
+        ctx.stroke();
+      }
+    } else {
+      ctx.rotate(this.angle + Math.PI / 2);
+      const s = this.size;
+      if (this.type === 'speedboat') {
+        // Small aggressive boat
+        ctx.fillStyle = '#662222';
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 1.1);
+        ctx.quadraticCurveTo(s * 0.45, -s * 0.3, s * 0.35, s * 0.6);
+        ctx.lineTo(-s * 0.35, s * 0.6);
+        ctx.quadraticCurveTo(-s * 0.45, -s * 0.3, 0, -s * 1.1);
+        ctx.fill();
+        ctx.strokeStyle = '#aa4444';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = '#883333';
+        ctx.fillRect(-s * 0.15, -s * 0.1, s * 0.3, s * 0.3);
+        // Gun
+        ctx.fillStyle = '#555';
+        ctx.fillRect(-s * 0.03, -s * 0.7, s * 0.06, s * 0.3);
+      } else if (this.type === 'gunboat') {
+        // Armed patrol craft
+        ctx.fillStyle = '#552222';
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 1.1);
+        ctx.quadraticCurveTo(s * 0.5, -s * 0.3, s * 0.42, s * 0.65);
+        ctx.lineTo(-s * 0.42, s * 0.65);
+        ctx.quadraticCurveTo(-s * 0.5, -s * 0.3, 0, -s * 1.1);
+        ctx.fill();
+        ctx.strokeStyle = '#993333';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = '#773333';
+        ctx.fillRect(-s * 0.25, -s * 0.3, s * 0.5, s * 0.6);
+        // Bridge
+        ctx.fillStyle = '#994444';
+        ctx.fillRect(-s * 0.15, 0, s * 0.3, s * 0.25);
+        // Dual guns
+        ctx.fillStyle = '#555';
+        ctx.fillRect(-s * 0.12, -s * 0.75, s * 0.04, s * 0.3);
+        ctx.fillRect(s * 0.08, -s * 0.75, s * 0.04, s * 0.3);
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.5, s * 0.14, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (this.type === 'drone') {
+        // Flying drone - diamond shape with rotors
+        ctx.fillStyle = '#884444';
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.9);
+        ctx.lineTo(s * 0.6, 0);
+        ctx.lineTo(0, s * 0.6);
+        ctx.lineTo(-s * 0.6, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#cc6666';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // Center body
+        ctx.fillStyle = '#aa5555';
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        // Rotor hints (spinning)
+        const rAngle = game.time * 15;
+        ctx.strokeStyle = 'rgba(200,150,150,0.5)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 4; i++) {
+          const rx = [0, s * 0.4, 0, -s * 0.4][i];
+          const ry = [-s * 0.5, 0, s * 0.35, 0][i];
+          ctx.beginPath();
+          ctx.arc(rx, ry, s * 0.15, rAngle, rAngle + Math.PI);
+          ctx.stroke();
+        }
+        // Red eye
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.1, s * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (this.type === 'enemyDestroyer') {
+        // Enemy destroyer - large, dark
+        ctx.fillStyle = '#441111';
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 1.2);
+        ctx.quadraticCurveTo(s * 0.55, -s * 0.3, s * 0.48, s * 0.6);
+        ctx.lineTo(s * 0.38, s * 0.8);
+        ctx.lineTo(-s * 0.38, s * 0.8);
+        ctx.lineTo(-s * 0.48, s * 0.6);
+        ctx.quadraticCurveTo(-s * 0.55, -s * 0.3, 0, -s * 1.2);
+        ctx.fill();
+        ctx.strokeStyle = '#882222';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#662222';
+        ctx.fillRect(-s * 0.32, -s * 0.4, s * 0.64, s * 0.9);
+        // Superstructure
+        ctx.fillStyle = '#883333';
+        ctx.fillRect(-s * 0.2, -s * 0.1, s * 0.4, s * 0.4);
+        // Turrets
+        ctx.fillStyle = '#555';
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.6, s * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(-s * 0.04, -s * 1.0, s * 0.08, s * 0.4);
+        ctx.beginPath();
+        ctx.arc(0, s * 0.55, s * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (this.isBoss) {
+        // Boss - massive battleship
+        ctx.fillStyle = '#330000';
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 1.2);
+        ctx.quadraticCurveTo(s * 0.6, -s * 0.3, s * 0.55, s * 0.5);
+        ctx.lineTo(s * 0.45, s * 0.85);
+        ctx.lineTo(-s * 0.45, s * 0.85);
+        ctx.lineTo(-s * 0.55, s * 0.5);
+        ctx.quadraticCurveTo(-s * 0.6, -s * 0.3, 0, -s * 1.2);
+        ctx.fill();
+        ctx.strokeStyle = '#cc2222';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // Dark deck
+        ctx.fillStyle = '#551111';
+        ctx.fillRect(-s * 0.4, -s * 0.55, s * 0.8, s * 1.1);
+        // Massive superstructure
+        ctx.fillStyle = '#772222';
+        ctx.fillRect(-s * 0.3, -s * 0.15, s * 0.6, s * 0.5);
+        ctx.fillStyle = '#993333';
+        ctx.fillRect(-s * 0.2, 0, s * 0.4, s * 0.25);
+        // Main guns (triple turrets)
+        ctx.fillStyle = '#444';
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.75, s * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(-s * 0.08, -s * 1.15, s * 0.05, s * 0.4);
+        ctx.fillRect(s * 0.03, -s * 1.15, s * 0.05, s * 0.4);
+        // Aft turrets
+        ctx.beginPath();
+        ctx.arc(-s * 0.18, s * 0.6, s * 0.14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(s * 0.18, s * 0.6, s * 0.14, 0, Math.PI * 2);
+        ctx.fill();
+        // Menacing glow
+        ctx.fillStyle = `rgba(255,0,0,${0.15 + Math.sin(game.time * 3) * 0.08})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 1.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+    if (!this.isMine) {
+      // EMP stun effect
+      if (game.empActive > 0) {
+        ctx.globalAlpha = 0.4 + Math.sin(game.time * 12) * 0.2;
+        ctx.strokeStyle = '#66aaff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 1.2, 0, Math.PI * 2);
+        ctx.stroke();
+        // Spark lines
+        for (let i = 0; i < 3; i++) {
+          const a = game.time * 8 + i * 2.1;
+          ctx.beginPath();
+          ctx.moveTo(this.x + Math.cos(a) * this.size * 0.5, this.y + Math.sin(a) * this.size * 0.5);
+          ctx.lineTo(this.x + Math.cos(a) * this.size * 1.3, this.y + Math.sin(a) * this.size * 1.3);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+      const bw = this.size * 1.5;
+      const bh = 3;
+      const bx = this.x - bw / 2;
+      const by = this.y - this.size - 6;
+      ctx.fillStyle = '#333';
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = '#ff4444';
+      ctx.fillRect(bx, by, bw * (this.hp / this.maxHp), bh);
+    }
+  }
+}
+
+class Projectile {
+  constructor(x, y, target, damage, color, isPlayerSide) {
+    this.x = x;
+    this.y = y;
+    const angle = angleTo({x, y}, target);
+    this.speed = 7;
+    this.vx = Math.cos(angle) * this.speed;
+    this.vy = Math.sin(angle) * this.speed;
+    this.damage = damage;
+    this.color = color;
+    this.isPlayerSide = isPlayerSide;
+    this.life = 3;
+    this.size = 3;
+    this.splash = 0;
+  }
+  update(dt) {
+    this.x += this.vx * 60 * dt;
+    this.y += this.vy * 60 * dt;
+    this.life -= dt;
+  }
+  draw() {
+    // Glow trail
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x - this.vx * 0.2, this.y - this.vy * 0.2, this.size * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.15;
+    ctx.beginPath();
+    ctx.arc(this.x - this.vx * 0.4, this.y - this.vy * 0.4, this.size * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // Core
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+class Missile {
+  constructor(targetShip) {
+    this.target = targetShip;
+    const side = randInt(0, 2);
+    if (side === 0) { this.x = rand(50, W - 50); this.y = -30; }
+    else if (side === 1) { this.x = -30; this.y = rand(50, H * 0.5); }
+    else { this.x = W + 30; this.y = rand(50, H * 0.5); }
+    this.speed = 3.5;
+    this.angle = angleTo(this, targetShip);
+    this.vx = Math.cos(this.angle) * this.speed;
+    this.vy = Math.sin(this.angle) * this.speed;
+    this.damage = 150;
+    this.alive = true;
+    this.size = 8;
+    this.trail = [];
+    this.warningTime = 2.0;
+    this.launched = false;
+    this.warnX = this.x;
+    this.warnY = this.y;
+    if (side === 0) { this.warnX = this.x; this.warnY = 20; this.warnAngle = Math.PI / 2; }
+    else if (side === 1) { this.warnX = 20; this.warnY = this.y; this.warnAngle = 0; }
+    else { this.warnX = W - 20; this.warnY = this.y; this.warnAngle = Math.PI; }
+  }
+  update(dt) {
+    if (!this.launched) {
+      this.warningTime -= dt;
+      if (this.warningTime <= 0) this.launched = true;
+      return;
+    }
+    if (this.target && this.target.hp > 0) {
+      const desired = angleTo(this, this.target);
+      let diff = desired - this.angle;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      this.angle += diff * 0.02;
+    }
+    this.vx = Math.cos(this.angle) * this.speed;
+    this.vy = Math.sin(this.angle) * this.speed;
+    this.x += this.vx * 60 * dt;
+    this.y += this.vy * 60 * dt;
+    this.trail.push({ x: this.x, y: this.y, life: 0.5 });
+    if (this.trail.length > 20) this.trail.shift();
+    for (const t of this.trail) t.life -= dt;
+    this.trail = this.trail.filter(t => t.life > 0);
+    for (const c of game.convoyShips) {
+      if (c.hp > 0 && dist(this, c) < c.size) {
+        c.hp -= this.damage;
+        this.alive = false;
+        spawnExplosion(this.x, this.y, 25);
+        addFloatingText(c.x, c.y - 20, '-' + this.damage + ' HP!', '#ff3333');
+        break;
+      }
+    }
+    if (this.x < -100 || this.x > W + 100 || this.y < -100 || this.y > H + 100) {
+      this.alive = false;
+    }
+  }
+  draw() {
+    if (!this.launched) {
+      const flash = Math.sin(game.time * 10) > 0;
+      if (flash) {
+        ctx.save();
+        ctx.translate(this.warnX, this.warnY);
+        ctx.rotate(this.warnAngle);
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.moveTo(12, 0);
+        ctx.lineTo(-6, -8);
+        ctx.lineTo(-6, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText('MISSILE!', 0, -14);
+        ctx.restore();
+      }
+      return;
+    }
+    for (let i = 0; i < this.trail.length; i++) {
+      const t = this.trail[i];
+      const alpha = (i / this.trail.length) * 0.6;
+      ctx.fillStyle = `rgba(255,${100 + i * 5},0,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, 3 - (i / this.trail.length) * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle + Math.PI / 2);
+    ctx.fillStyle = '#ff4400';
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size);
+    ctx.lineTo(-4, this.size * 0.5);
+    ctx.lineTo(4, this.size * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffaa00';
+    ctx.beginPath();
+    ctx.moveTo(-3, this.size * 0.5);
+    ctx.lineTo(0, this.size);
+    ctx.lineTo(3, this.size * 0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    if (this.launched) {
+      ctx.fillStyle = Math.sin(game.time * 8) > 0 ? '#ffff00' : '#ff8800';
+      ctx.font = 'bold 10px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('CLICK TO INTERCEPT!', this.x, this.y - 18);
+    }
+  }
+}
+
+class Explosion {
+  constructor(x, y, size) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.life = 0.6;
+    this.maxLife = 0.6;
+    this.particles = [];
+    for (let i = 0; i < size; i++) {
+      this.particles.push({
+        x: 0, y: 0,
+        vx: rand(-3, 3), vy: rand(-3, 3),
+        life: rand(0.2, 0.6),
+        size: rand(1, 4),
+        color: ['#ff4400', '#ffaa00', '#ff6600', '#ffdd00'][randInt(0, 3)]
+      });
+    }
+  }
+  update(dt) {
+    this.life -= dt;
+    for (const p of this.particles) {
+      p.x += p.vx * 60 * dt;
+      p.y += p.vy * 60 * dt;
+      p.life -= dt;
+      p.vx *= 0.96;
+      p.vy *= 0.96;
+    }
+  }
+  draw() {
+    const alpha = this.life / this.maxLife;
+    for (const p of this.particles) {
+      if (p.life <= 0) continue;
+      ctx.globalAlpha = p.life * alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(this.x + p.x, this.y + p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    if (alpha > 0.3) {
+      ctx.fillStyle = `rgba(255,200,50,${alpha * 0.5})`;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size * alpha * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+// ============== HELPERS ==============
+function drawWake(wake, shipSize, isEnemy) {
+  if (wake.length < 2) return;
+  for (let i = 1; i < wake.length; i++) {
+    const w = wake[i];
+    if (w.life <= 0) continue;
+    const prev = wake[i - 1];
+    const alpha = Math.max(0, w.life) * 0.25;
+    const spread = (1 - w.life) * shipSize * 0.8;
+    const angle = Math.atan2(w.y - prev.y, w.x - prev.x) + Math.PI / 2;
+    const lx = w.x + Math.cos(angle) * spread;
+    const ly = w.y + Math.sin(angle) * spread;
+    const rx = w.x - Math.cos(angle) * spread;
+    const ry = w.y - Math.sin(angle) * spread;
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = isEnemy ? 'rgba(255,150,150,0.5)' : 'rgba(150,200,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(lx, ly, 1 + spread * 0.3, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(rx, ry, 1 + spread * 0.3, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function ensurePlayerHasShip() {
+  if (game.escortShips.length === 0) {
+    game.escortShips.push(new EscortShip('patrol'));
+    game.notification = 'Emergency Patrol Boat deployed!';
+    game.notificationTimer = 2;
+  }
+}
+
+function checkAchievements() {
+  for (const a of ACHIEVEMENTS) {
+    if (!game.unlockedAchievements.has(a.id) && a.check()) {
+      game.unlockedAchievements.add(a.id);
+      game.gold += a.reward;
+      game.score += a.reward;
+      game.achievementPopup = a;
+      game.achievementPopupTimer = 3;
+    }
+  }
+}
+
+function spawnExplosion(x, y, size) {
+  game.explosions.push(new Explosion(x, y, size || 15));
+  playSound('explosion');
+}
+
+function addFloatingText(x, y, text, color) {
+  game.floatingTexts.push({ x, y, text, color: color || '#fff', life: 1.5 });
+}
+
+function getConvoyCenter() {
+  let cx = 0, cy = 0, count = 0;
+  for (const c of game.convoyShips) {
+    if (c.hp > 0) { cx += c.x; cy += c.y; count++; }
+  }
+  if (count === 0) return { x: W / 2, y: H / 2 };
+  return { x: cx / count, y: cy / count };
+}
+
+function updateFormation() {
+  const center = getConvoyCenter();
+  const ships = game.escortShips;
+  const n = ships.length;
+  if (n === 0) return;
+  const radius = 90;
+  if (n === 1) {
+    ships[0].targetX = center.x;
+    ships[0].targetY = center.y - radius;
+  } else if (n === 2) {
+    ships[0].targetX = center.x;
+    ships[0].targetY = center.y - radius;
+    ships[1].targetX = center.x;
+    ships[1].targetY = center.y + radius;
+  } else if (n === 3) {
+    ships[0].targetX = center.x;
+    ships[0].targetY = center.y - radius;
+    ships[1].targetX = center.x - radius * 0.87;
+    ships[1].targetY = center.y + radius * 0.5;
+    ships[2].targetX = center.x + radius * 0.87;
+    ships[2].targetY = center.y + radius * 0.5;
+  } else if (n === 4) {
+    ships[0].targetX = center.x;
+    ships[0].targetY = center.y - radius;
+    ships[1].targetX = center.x;
+    ships[1].targetY = center.y + radius;
+    ships[2].targetX = center.x - radius;
+    ships[2].targetY = center.y;
+    ships[3].targetX = center.x + radius;
+    ships[3].targetY = center.y;
+  } else {
+    for (let i = 0; i < n; i++) {
+      const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+      ships[i].targetX = center.x + Math.cos(angle) * radius;
+      ships[i].targetY = center.y + Math.sin(angle) * radius;
+    }
+  }
+}
+
+function getMissileInterval() {
+  const w = game.wave;
+  if (w < 3) return Infinity;
+  if (w <= 5) return rand(8, 12);
+  if (w <= 10) return rand(5, 8);
+  if (w <= 15) return rand(3, 6);
+  return rand(2, 4);
+}
+
+function spawnMissile() {
+  const aliveConvoy = game.convoyShips.filter(c => c.hp > 0);
+  if (aliveConvoy.length === 0) return;
+  const target = aliveConvoy[randInt(0, aliveConvoy.length - 1)];
+  game.missiles.push(new Missile(target));
+  playSound('warning');
+}
+
+// ============== WAVE SETUP ==============
+function setupWave(waveNum) {
+  game.wave = waveNum;
+  game.waveComplete = false;
+  game.waveCompleteTimer = 0;
+  game.waveFailed = false;
+  game.waveGoldEarned = 0;
+  game.waveSpawnQueue = [];
+  game.waveSpawnTimer = 0;
+  game.enemies = [];
+  game.projectiles = [];
+  game.missiles = [];
+  game.explosions = [];
+  game.missileTimer = getMissileInterval();
+  game.weather = waveNum === 1 ? 'clear' : getRandomWeather();
+  game.raindrops = [];
+
+  // Convoy setup
+  game.convoyShips = [];
+  const numConvoy = Math.min(2 + Math.floor(waveNum / 5), 5);
+  game.totalConvoy = numConvoy;
+  game.survivedConvoy = 0;
+  for (let i = 0; i < numConvoy; i++) {
+    const type = i % 2 === 0 ? 'tanker' : 'cargo';
+    const x = W / 2 + (i - (numConvoy - 1) / 2) * 60;
+    const y = H - 80;
+    game.convoyShips.push(new ConvoyShip(type, x, y));
+  }
+
+  // Enemy queue
+  const baseEnemies = 3 + waveNum * 2;
+  const enemyTypes = Object.keys(ENEMY_DEFS).filter(t => ENEMY_DEFS[t].minWave <= waveNum);
+
+  for (let i = 0; i < baseEnemies; i++) {
+    const type = enemyTypes[randInt(0, enemyTypes.length - 1)];
+    game.waveSpawnQueue.push(type);
+  }
+
+  // Boss every 5 waves
+  if (waveNum % 5 === 0 && waveNum >= 5) {
+    game.waveSpawnQueue.push('boss');
+  }
+
+  game.waveEnemiesLeft = game.waveSpawnQueue.length;
+
+  // Heal escort ships
+  for (const ship of game.escortShips) {
+    ship.hp = ship.maxHp;
+    ship.fireCooldown = 0;
+  }
+
+  // Save config for retry
+  game.lastWaveConfig = {
+    waveNum: waveNum,
+    gold: game.gold,
+    score: game.score,
+  };
+
+  updateFormation();
+}
+
+function spawnNextEnemy() {
+  if (game.waveSpawnQueue.length === 0) return;
+  const type = game.waveSpawnQueue.shift();
+  const side = randInt(0, 3);
+  let x, y;
+  if (side === 0) { x = rand(50, W - 50); y = -30; }
+  else if (side === 1) { x = rand(50, W - 50); y = H + 30; }
+  else if (side === 2) { x = -30; y = rand(50, H - 50); }
+  else { x = W + 30; y = rand(50, H - 50); }
+
+  if (type === 'mine') {
+    const center = getConvoyCenter();
+    x = center.x + rand(-200, 200);
+    y = center.y + rand(-150, -50);
+    x = clamp(x, 50, W - 50);
+    y = clamp(y, 50, H - 50);
+  }
+
+  const enemy = new Enemy(type, x, y);
+  // Scale HP with wave
+  const scale = 1 + (game.wave - 1) * 0.1;
+  enemy.hp = Math.floor(enemy.hp * scale);
+  enemy.maxHp = enemy.hp;
+  game.enemies.push(enemy);
+}
+
+// ============== DRAWING ==============
+function drawOcean() {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#071220');
+  grad.addColorStop(0.3, '#0b1a30');
+  grad.addColorStop(0.6, '#0e2240');
+  grad.addColorStop(1, '#122a4a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  game.waterOffset += game.dt * 15;
+
+  // Subtle water caustics
+  ctx.globalAlpha = 0.03;
+  for (let i = 0; i < 8; i++) {
+    const cx = (Math.sin(game.time * 0.2 + i * 1.5) + 1) * W / 2;
+    const cy = (Math.cos(game.time * 0.15 + i * 2) + 1) * H / 2;
+    const grad2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120);
+    grad2.addColorStop(0, '#2266aa');
+    grad2.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad2;
+    ctx.fillRect(cx - 120, cy - 120, 240, 240);
+  }
+
+  // Wave lines (two layers for depth)
+  for (let layer = 0; layer < 2; layer++) {
+    ctx.globalAlpha = layer === 0 ? 0.06 : 0.04;
+    const spacing = layer === 0 ? 35 : 55;
+    const wSpeed = layer === 0 ? 1 : 0.6;
+    for (let y = 0; y < H; y += spacing) {
+      const offset = Math.sin((y + game.waterOffset * wSpeed) * 0.02) * 20;
+      ctx.strokeStyle = layer === 0 ? '#3366aa' : '#4488cc';
+      ctx.lineWidth = layer === 0 ? 1 : 0.5;
+      ctx.beginPath();
+      for (let x = 0; x < W; x += 5) {
+        const yy = y + Math.sin((x + offset) * 0.03 + layer) * (6 + layer * 4);
+        if (x === 0) ctx.moveTo(x, yy);
+        else ctx.lineTo(x, yy);
+      }
+      ctx.stroke();
+    }
+  }
+
+  // Specular highlights (sun reflections)
+  ctx.globalAlpha = 0.015;
+  for (let i = 0; i < 5; i++) {
+    const sx = W * 0.3 + Math.sin(game.time * 0.3 + i * 3) * W * 0.3;
+    const sy = H * 0.3 + Math.cos(game.time * 0.2 + i * 2) * H * 0.2;
+    ctx.fillStyle = '#88bbff';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, 40 + Math.sin(game.time + i) * 15, 8, 0.3 + i * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Coastline/shore hints on sides
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = '#3a2a1a';
+  // Left shore
+  ctx.beginPath();
+  for (let y = 0; y <= H; y += 20) {
+    const x = 10 + Math.sin((y + game.waterOffset * 0.3) * 0.015) * 15;
+    if (y === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.lineTo(0, H);
+  ctx.lineTo(0, 0);
+  ctx.fill();
+  // Right shore
+  ctx.beginPath();
+  for (let y = 0; y <= H; y += 20) {
+    const x = W - 10 - Math.sin((y + game.waterOffset * 0.3 + 100) * 0.015) * 15;
+    if (y === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.lineTo(W, H);
+  ctx.lineTo(W, 0);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Small islands (static decorative elements)
+  if (game.state === 'PLAYING') {
+    const islandY1 = ((200 - game.waterOffset * 0.1) % (H + 200)) - 100;
+    const islandY2 = ((500 - game.waterOffset * 0.1) % (H + 200)) - 100;
+    drawIsland(70, islandY1, 18);
+    drawIsland(W - 60, islandY2, 14);
+  }
+}
+
+function drawIsland(x, y, r) {
+  ctx.globalAlpha = 0.3;
+  // Shallow water around island
+  ctx.fillStyle = '#1a4a5a';
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * 2.5, r * 1.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Island
+  ctx.fillStyle = '#4a3a2a';
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 0.7, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  // Green top
+  ctx.fillStyle = '#2a5a2a';
+  ctx.beginPath();
+  ctx.ellipse(x - 2, y - 2, r * 0.7, r * 0.5, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawWeather(dt) {
+  const w = WEATHER_TYPES[game.weather];
+  if (w.overlay) {
+    ctx.fillStyle = w.overlay;
+    ctx.fillRect(0, 0, W, H);
+  }
+  if (game.weather === 'storm') {
+    // Rain
+    if (game.raindrops.length < 80) {
+      game.raindrops.push({ x: rand(0, W), y: rand(-20, 0), speed: rand(8, 14) });
+    }
+    ctx.strokeStyle = 'rgba(150,180,220,0.4)';
+    ctx.lineWidth = 1;
+    for (let i = game.raindrops.length - 1; i >= 0; i--) {
+      const r = game.raindrops[i];
+      r.y += r.speed * 60 * dt;
+      r.x -= 2 * 60 * dt;
+      ctx.beginPath();
+      ctx.moveTo(r.x, r.y);
+      ctx.lineTo(r.x - 3, r.y + 12);
+      ctx.stroke();
+      if (r.y > H) {
+        r.y = rand(-20, 0);
+        r.x = rand(0, W + 50);
+      }
+    }
+    // Occasional lightning
+    game.lightning -= dt;
+    if (game.lightning <= 0 && Math.random() < 0.002) {
+      game.lightning = 0.08;
+    }
+    if (game.lightning > 0) {
+      ctx.fillStyle = 'rgba(200,210,255,0.15)';
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+  if (game.weather === 'fog') {
+    // Fog wisps
+    ctx.globalAlpha = 0.06;
+    for (let i = 0; i < 5; i++) {
+      const fy = (i * 150 + game.time * 10) % (H + 100) - 50;
+      const fx = Math.sin(game.time * 0.3 + i) * 100 + W / 2;
+      ctx.fillStyle = '#ccddee';
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, 200, 30, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawHUD() {
+  // Top bar
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0, 0, W, 36);
+  ctx.strokeStyle = 'rgba(100,150,200,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 36);
+  ctx.lineTo(W, 36);
+  ctx.stroke();
+
+  ctx.font = 'bold 14px Segoe UI';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ffd700';
+  ctx.fillText('Gold: ' + game.gold, 10, 24);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('Wave: ' + game.wave + (game.isReplay ? ' (Replay)' : ''), 150, 24);
+
+  ctx.fillStyle = '#44aaff';
+  ctx.fillText('Score: ' + game.score, 280, 24);
+
+  ctx.fillStyle = '#ff6644';
+  const livesLeft = game.maxFails - game.failedWaves;
+  ctx.fillText('Lives: ' + livesLeft, 420, 24);
+
+  ctx.fillStyle = '#88ddff';
+  ctx.fillText('Ships: ' + game.escortShips.length + '/' + game.maxSlots, 550, 24);
+
+  ctx.fillStyle = '#ffaa44';
+  ctx.fillText('Interceptors: ' + game.interceptorMissiles, 680, 24);
+
+  // Weather indicator
+  const wName = WEATHER_TYPES[game.weather].name;
+  const wColor = game.weather === 'clear' ? '#88ff88' : game.weather === 'fog' ? '#aabbcc' : game.weather === 'storm' ? '#8888ff' : '#6666aa';
+  ctx.fillStyle = wColor;
+  ctx.textAlign = 'center';
+  ctx.fillText(wName, W / 2 + 70, 24);
+
+  // Convoy status
+  const alive = game.convoyShips.filter(c => c.hp > 0).length;
+  ctx.fillStyle = alive > 0 ? '#44ff88' : '#ff4444';
+  ctx.textAlign = 'right';
+  ctx.fillText('Convoy: ' + alive + '/' + game.totalConvoy, W - 10, 24);
+
+  // Skill bar at bottom
+  const skillKeys = Object.keys(SKILLS);
+  const skBarY = H - 40;
+  for (let i = 0; i < skillKeys.length; i++) {
+    const sk = SKILLS[skillKeys[i]];
+    const cd = game.skillCooldowns[skillKeys[i]];
+    const locked = game.wave < sk.unlockWave;
+    const bx = 10 + i * 130;
+    ctx.fillStyle = locked ? 'rgba(30,30,30,0.7)' : cd > 0 ? 'rgba(40,20,20,0.7)' : 'rgba(20,40,20,0.7)';
+    ctx.fillRect(bx, skBarY, 120, 30);
+    ctx.strokeStyle = locked ? '#333' : cd > 0 ? '#663333' : '#44aa66';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, skBarY, 120, 30);
+    ctx.fillStyle = locked ? '#555' : cd > 0 ? '#aa6644' : '#ffffff';
+    ctx.font = 'bold 11px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText('[' + sk.key + '] ' + sk.name, bx + 5, skBarY + 13);
+    ctx.font = '9px Segoe UI';
+    ctx.fillStyle = locked ? '#444' : cd > 0 ? '#ff8844' : '#88ff88';
+    ctx.fillText(locked ? 'Wave ' + sk.unlockWave : cd > 0 ? Math.ceil(cd) + 's' : 'Ready', bx + 5, skBarY + 25);
+    if (cd > 0 && !locked) {
+      const ratio = cd / sk.cooldown;
+      ctx.fillStyle = 'rgba(255,100,50,0.2)';
+      ctx.fillRect(bx, skBarY, 120 * ratio, 30);
+    }
+  }
+}
+
+function drawMinimap() {
+  const mx = W - 110, my = 46, mw = 100, mh = 80;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(mx, my, mw, mh);
+  ctx.strokeStyle = 'rgba(100,150,200,0.3)';
+  ctx.strokeRect(mx, my, mw, mh);
+
+  const sx = mw / W, sy = mh / H;
+
+  // Convoy
+  for (const c of game.convoyShips) {
+    if (c.hp <= 0) continue;
+    ctx.fillStyle = '#4488ff';
+    ctx.fillRect(mx + c.x * sx - 1, my + c.y * sy - 1, 3, 3);
+  }
+
+  // Escorts
+  for (const s of game.escortShips) {
+    ctx.fillStyle = '#44ff44';
+    ctx.fillRect(mx + s.x * sx - 1, my + s.y * sy - 1, 3, 3);
+  }
+
+  // Enemies
+  for (const e of game.enemies) {
+    ctx.fillStyle = '#ff4444';
+    ctx.fillRect(mx + e.x * sx - 1, my + e.y * sy - 1, 2, 2);
+  }
+
+  // Missiles
+  for (const m of game.missiles) {
+    if (m.launched) {
+      ctx.fillStyle = '#ff8800';
+      ctx.fillRect(mx + m.x * sx - 1, my + m.y * sy - 1, 2, 2);
+    }
+  }
+}
+
+// ============== GAME UPDATE ==============
+function updateGame(dt) {
+  game.time += dt;
+  game.dt = dt;
+
+  // Skill cooldowns
+  for (const sk of Object.keys(game.skillCooldowns)) {
+    if (game.skillCooldowns[sk] > 0) game.skillCooldowns[sk] -= dt;
+  }
+  if (game.empActive > 0) game.empActive -= dt;
+
+  // Convoy movement
+  for (const c of game.convoyShips) {
+    if (c.hp > 0) c.update(dt);
+  }
+
+  // Check convoy death
+  for (const c of game.convoyShips) {
+    if (c.hp <= 0 && c.alive) {
+      c.alive = false;
+      spawnExplosion(c.x, c.y, 30);
+      addFloatingText(c.x, c.y - 30, c.name + ' DESTROYED!', '#ff4444');
+    }
+  }
+
+  // Formation update
+  updateFormation();
+
+  // Escort ships
+  for (const ship of game.escortShips) {
+    ship.update(dt);
+    ship.tryFire(game.enemies);
+  }
+
+  // Spawn enemies
+  game.waveSpawnTimer -= dt;
+  if (game.waveSpawnTimer <= 0 && game.waveSpawnQueue.length > 0) {
+    spawnNextEnemy();
+    game.waveSpawnTimer = rand(1.5, 3.5);
+  }
+
+  // Update enemies
+  for (const e of game.enemies) {
+    e.update(dt);
+    // Mine proximity check
+    if (e.isMine) {
+      for (const c of game.convoyShips) {
+        if (c.hp > 0 && dist(e, c) < 50) {
+          c.hp -= e.damage;
+          spawnExplosion(e.x, e.y, 30);
+          addFloatingText(c.x, c.y - 20, '-' + e.damage + ' MINE!', '#ff8800');
+          e.hp = 0;
+          break;
+        }
+      }
+    }
+  }
+
+  // Projectiles
+  for (const p of game.projectiles) {
+    p.update(dt);
+    if (p.isPlayerSide) {
+      for (const e of game.enemies) {
+        if (e.hp > 0 && dist(p, e) < e.size) {
+          e.hp -= p.damage;
+          p.life = 0;
+          // Splash damage
+          if (p.splash && p.splash > 0) {
+            for (const e2 of game.enemies) {
+              if (e2 !== e && e2.hp > 0 && dist(e, e2) < p.splash) {
+                e2.hp -= p.damage * 0.5;
+                if (e2.hp <= 0) {
+                  spawnExplosion(e2.x, e2.y, 12);
+                  const g2 = Math.floor(e2.gold * game.replayGoldMulti);
+                  game.gold += g2;
+                  game.score += g2;
+                  game.waveGoldEarned += g2;
+                  game.totalKills++;
+                  if (e2.isBoss) game.bossKills++;
+                  addFloatingText(e2.x, e2.y - 15, '+' + g2 + 'g', '#ffd700');
+                }
+              }
+            }
+          }
+          if (e.hp <= 0) {
+            spawnExplosion(e.x, e.y, 15);
+            const g = Math.floor(e.gold * game.replayGoldMulti);
+            game.gold += g;
+            game.score += g;
+            game.waveGoldEarned += g;
+            game.totalKills++;
+            if (e.isBoss) game.bossKills++;
+            addFloatingText(e.x, e.y - 15, '+' + g + 'g', '#ffd700');
+          }
+          break;
+        }
+      }
+    } else {
+      for (const s of game.escortShips) {
+        if (dist(p, s) < s.size) {
+          s.hp -= p.damage;
+          p.life = 0;
+          if (s.hp <= 0) {
+            spawnExplosion(s.x, s.y, 20);
+            addFloatingText(s.x, s.y - 15, s.name + ' SUNK!', '#ff6644');
+          }
+          break;
+        }
+      }
+      for (const c of game.convoyShips) {
+        if (c.hp > 0 && dist(p, c) < c.size) {
+          c.hp -= p.damage;
+          p.life = 0;
+          break;
+        }
+      }
+    }
+  }
+
+  // Remove dead
+  game.enemies = game.enemies.filter(e => e.hp > 0);
+  game.projectiles = game.projectiles.filter(p => p.life > 0);
+  game.escortShips = game.escortShips.filter(s => s.hp > 0);
+  game.explosions = game.explosions.filter(e => e.life > 0);
+
+  // Explosions
+  for (const e of game.explosions) e.update(dt);
+
+  // Floating texts
+  for (const ft of game.floatingTexts) {
+    ft.y -= 30 * dt;
+    ft.life -= dt;
+  }
+  game.floatingTexts = game.floatingTexts.filter(ft => ft.life > 0);
+
+  // Missiles
+  game.missileTimer -= dt;
+  if (game.missileTimer <= 0 && !game.waveComplete) {
+    spawnMissile();
+    game.missileTimer = getMissileInterval();
+  }
+
+  for (const m of game.missiles) {
+    m.update(dt);
+  }
+  game.missiles = game.missiles.filter(m => m.alive);
+
+  // Check for missile near cursor
+  game.missileNearCursor = false;
+  for (const m of game.missiles) {
+    if (m.launched && dist({ x: game.mouseX, y: game.mouseY }, m) < 60) {
+      game.missileNearCursor = true;
+      break;
+    }
+  }
+
+  // Achievement check
+  checkAchievements();
+  if (game.achievementPopupTimer > 0) game.achievementPopupTimer -= dt;
+
+  // Wave completion check
+  const allEnemiesDead = game.enemies.length === 0 && game.waveSpawnQueue.length === 0;
+  const allConvoyDead = game.convoyShips.every(c => c.hp <= 0);
+  const allConvoyPassed = game.convoyShips.some(c => c.hp > 0 && c.y < -50);
+
+  if (!game.waveComplete && !game.waveFailed) {
+    if (allConvoyDead) {
+      game.waveFailed = true;
+      if (game.isReplay) {
+        // Replay failure doesn't cost a life
+        game.notification = 'REPLAY FAILED - No penalty';
+        game.notificationTimer = 3;
+      } else {
+        game.failedWaves++;
+        game.notification = 'CONVOY DESTROYED! Lives remaining: ' + (game.maxFails - game.failedWaves);
+        game.notificationTimer = 3;
+        if (game.failedWaves >= game.maxFails) {
+          game.state = 'GAMEOVER';
+          return;
+        }
+        game.retryAvailable = true;
+      }
+      game.waveComplete = true;
+      game.waveCompleteTimer = 4;
+    } else if (allConvoyPassed || (allEnemiesDead && game.missiles.length === 0)) {
+      completeWave();
+    }
+  }
+
+  if (game.waveComplete) {
+    game.waveCompleteTimer -= dt;
+    if (game.waveCompleteTimer <= 0) {
+      // Restore wave progress after replay
+      if (game.isReplay && game.replayReturnWave > 0) {
+        game.wave = game.replayReturnWave;
+        game.waveFailed = game.replayWasFailed || false;
+        game.replayReturnWave = 0;
+      }
+      game.isReplay = false;
+      game.replayGoldMulti = 1.0;
+      game.selectedFarmWave = 0;
+      game.state = 'SHOP';
+      game.shopTab = 'buy';
+      game.shopSelectedShip = -1;
+    }
+  }
+
+  // Notification timer
+  if (game.notificationTimer > 0) {
+    game.notificationTimer -= dt;
+    if (game.notificationTimer <= 0) game.notification = null;
+  }
+}
+
+function completeWave() {
+  game.waveComplete = true;
+  game.waveCompleteTimer = 3;
+  game.survivedConvoy = game.convoyShips.filter(c => c.hp > 0).length;
+  if (game.survivedConvoy === game.totalConvoy) game.hadPerfectWave = true;
+
+  let bonus = 0;
+  for (const c of game.convoyShips) {
+    if (c.hp > 0) {
+      bonus += c.goldBonus;
+    }
+  }
+  bonus = Math.floor(bonus * game.replayGoldMulti);
+  game.gold += bonus;
+  game.score += bonus;
+  game.waveGoldEarned += bonus;
+
+  const replayTag = game.isReplay ? ' (Replay -50%)' : '';
+  game.notification = 'Wave ' + game.wave + ' Complete! +' + bonus + ' gold bonus' + replayTag;
+  game.notificationTimer = 3;
+
+  // Track progress (only for non-replay waves)
+  if (!game.isReplay && game.wave > game.highestCompletedWave) {
+    game.highestCompletedWave = game.wave;
+  }
+
+  // Refill interceptors
+  game.interceptorMissiles = Math.min(game.interceptorMissiles + 2, 10);
+
+  // Generate black market offers
+  generateBlackMarket();
+}
+
+function generateBlackMarket() {
+  game.blackMarketOffers = [];
+  const offers = [
+    { type: 'gold_boost', name: 'Gold Cache', desc: '+200 Gold', cost: 80, apply: () => { game.gold += 200; } },
+    { type: 'hull_repair', name: 'Emergency Repair Kit', desc: 'Full heal all ships', cost: 120, apply: () => { for (const s of game.escortShips) s.hp = s.maxHp; for (const c of game.convoyShips) if (c.hp > 0) c.hp = c.maxHp; } },
+    { type: 'interceptors', name: 'Missile Stockpile', desc: '+5 Interceptors', cost: 100, apply: () => { game.interceptorMissiles = Math.min(game.interceptorMissiles + 5, 10); } },
+    { type: 'random_upgrade', name: 'Mysterious Parts', desc: 'Random upgrade to random ship', cost: 150, apply: () => { if (game.escortShips.length > 0) { const s = game.escortShips[randInt(0, game.escortShips.length - 1)]; const uTypes = Object.keys(UPGRADE_DEFS); const ut = uTypes[randInt(0, uTypes.length - 1)]; if (s.upgrades[ut] < UPGRADE_DEFS[ut].maxLevel) { s.upgrades[ut]++; s.maxHp = s.getMaxHp(); } } } },
+    { type: 'discount_ship', name: 'Salvaged Frigate', desc: 'Get a Frigate at half price', cost: 250, apply: () => { if (game.escortShips.length < game.maxSlots) game.escortShips.push(new EscortShip('frigate')); } },
+  ];
+  // Pick 2-3 random offers
+  const shuffled = offers.sort(() => Math.random() - 0.5);
+  const count = Math.min(randInt(2, 3), shuffled.length);
+  for (let i = 0; i < count; i++) {
+    // Apply random price variance
+    const offer = { ...shuffled[i] };
+    offer.cost = Math.floor(offer.cost * rand(0.7, 1.3));
+    game.blackMarketOffers.push(offer);
+  }
+}
+
+// ============== SHOP ==============
+function drawShop() {
+  // Background
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Title
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 28px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('MISSION COMMAND', W / 2, 40);
+
+  ctx.font = '14px Segoe UI';
+  ctx.fillStyle = '#aaaaaa';
+  ctx.fillText('Wave ' + game.wave + ' Complete | Gold: ' + game.gold + ' | Score: ' + game.score, W / 2, 65);
+
+  // Tabs
+  const tabs = [
+    { id: 'buy', label: 'Buy Ships' },
+    { id: 'upgrade', label: 'Upgrade Ships' },
+    { id: 'slots', label: 'Buy Slots' },
+    { id: 'sell', label: 'Sell Ships' },
+    { id: 'missiles', label: 'Missile Defense' },
+    { id: 'market', label: 'Black Market' },
+  ];
+
+  const tabW = 140;
+  const tabH = 32;
+  const tabY = 85;
+  const tabStartX = W / 2 - (tabs.length * tabW) / 2;
+
+  for (let i = 0; i < tabs.length; i++) {
+    const tx = tabStartX + i * tabW;
+    const active = game.shopTab === tabs[i].id;
+    ctx.fillStyle = active ? '#1a4a7a' : '#0d1f3c';
+    ctx.fillRect(tx, tabY, tabW - 4, tabH);
+    ctx.strokeStyle = active ? '#44aaff' : '#1a3a5c';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(tx, tabY, tabW - 4, tabH);
+    ctx.fillStyle = active ? '#ffffff' : '#888888';
+    ctx.font = '12px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(tabs[i].label, tx + (tabW - 4) / 2, tabY + 21);
+  }
+
+  const contentY = 130;
+
+  if (game.shopTab === 'buy') {
+    drawShopBuy(contentY);
+  } else if (game.shopTab === 'upgrade') {
+    drawShopUpgrade(contentY);
+  } else if (game.shopTab === 'slots') {
+    drawShopSlots(contentY);
+  } else if (game.shopTab === 'sell') {
+    drawShopSell(contentY);
+  } else if (game.shopTab === 'missiles') {
+    drawShopMissiles(contentY);
+  } else if (game.shopTab === 'market') {
+    drawShopMarket(contentY);
+  }
+
+  // ===== Bottom section =====
+  const bottomY = H - 195;
+
+  // Fleet display
+  ctx.fillStyle = '#aaaaaa';
+  ctx.font = '11px Segoe UI';
+  ctx.textAlign = 'center';
+  const fleetText = game.escortShips.length === 0
+    ? 'Your Fleet: EMPTY (free Patrol Boat on farm/battle)'
+    : 'Your Fleet: ' + game.escortShips.length + '/' + game.maxSlots + ' slots';
+  ctx.fillText(fleetText, W / 2, bottomY);
+
+  for (let i = 0; i < game.escortShips.length; i++) {
+    const s = game.escortShips[i];
+    const sx = W / 2 - (game.escortShips.length * 50) / 2 + i * 50 + 25;
+    const sy = bottomY + 18;
+    ctx.fillStyle = s.color;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '9px Segoe UI';
+    ctx.fillText(s.name.split(' ')[0], sx, sy + 18);
+  }
+
+  // Determine next wave: if failed current wave, next is same wave (retry)
+  const nextWave = game.waveFailed ? game.wave : game.wave + 1;
+
+  // NEXT WAVE / RETRY button (right)
+  const nextBtnX = W / 2 + 10;
+  const nextBtnY = H - 55;
+  const nextBtnW = 200;
+  const nextBtnH = 42;
+  ctx.fillStyle = game.waveFailed ? '#6a3a1a' : '#1a6a2a';
+  ctx.fillRect(nextBtnX, nextBtnY, nextBtnW, nextBtnH);
+  ctx.strokeStyle = game.waveFailed ? '#ff8844' : '#44ff66';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(nextBtnX, nextBtnY, nextBtnW, nextBtnH);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 15px Segoe UI';
+  ctx.textAlign = 'center';
+  if (game.waveFailed) {
+    ctx.fillText('RETRY WAVE ' + nextWave, nextBtnX + nextBtnW / 2, nextBtnY + 18);
+    ctx.fillStyle = '#ffaa88';
+    ctx.font = '10px Segoe UI';
+    ctx.fillText('Full rewards', nextBtnX + nextBtnW / 2, nextBtnY + 33);
+  } else {
+    ctx.fillText('WAVE ' + nextWave + ' >>', nextBtnX + nextBtnW / 2, nextBtnY + 27);
+  }
+
+  // FARM GOLD section (left) - wave selector
+  const farmX = 10;
+  const farmY = H - 55;
+  const farmH = 42;
+
+  ctx.fillStyle = '#aabbcc';
+  ctx.font = 'bold 11px Segoe UI';
+  ctx.textAlign = 'left';
+  ctx.fillText('FARM GOLD (50% rewards):', farmX, farmY - 5);
+
+  if (game.highestCompletedWave === 0) {
+    ctx.fillStyle = '#666';
+    ctx.font = '10px Segoe UI';
+    ctx.fillText('Complete wave 1 first to unlock farming', farmX, farmY + 18);
+  } else {
+    // Draw wave buttons for farming
+    const maxShow = Math.min(game.highestCompletedWave, 8);
+    const wBtnW = Math.min(48, Math.floor((W / 2 - 30) / maxShow));
+    for (let i = 0; i < maxShow; i++) {
+      const waveNum = game.highestCompletedWave - maxShow + 1 + i;
+      if (waveNum < 1) continue;
+      const bx = farmX + i * (wBtnW + 4);
+      const by = farmY;
+      const selected = game.selectedFarmWave === waveNum;
+
+      ctx.fillStyle = selected ? '#1a4a7a' : '#0d2a4a';
+      ctx.fillRect(bx, by, wBtnW, farmH);
+      ctx.strokeStyle = selected ? '#44aaff' : '#1a4a6a';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx, by, wBtnW, farmH);
+      ctx.fillStyle = selected ? '#ffffff' : '#88aacc';
+      ctx.font = 'bold 13px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('W' + waveNum, bx + wBtnW / 2, by + 17);
+      // Difficulty hint
+      ctx.fillStyle = '#668899';
+      ctx.font = '8px Segoe UI';
+      const diff = waveNum <= 3 ? 'Easy' : waveNum <= 7 ? 'Med' : waveNum <= 12 ? 'Hard' : 'Hell';
+      ctx.fillText(diff, bx + wBtnW / 2, by + 30);
+    }
+
+    // GO FARM button (after wave buttons)
+    if (game.selectedFarmWave > 0) {
+      const goX = farmX + maxShow * (wBtnW + 4) + 4;
+      const goW = 60;
+      ctx.fillStyle = '#1a5a3a';
+      ctx.fillRect(goX, farmY, goW, farmH);
+      ctx.strokeStyle = '#44dd88';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(goX, farmY, goW, farmH);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('GO!', goX + goW / 2, farmY + 27);
+    }
+  }
+}
+
+function drawShopBuy(startY) {
+  const types = Object.keys(SHIP_TYPES);
+  ctx.fillStyle = '#cccccc';
+  ctx.font = 'bold 16px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('Purchase Escort Ships', W / 2, startY + 10);
+  ctx.font = '12px Segoe UI';
+  ctx.fillStyle = '#888888';
+  ctx.fillText('Slots: ' + game.escortShips.length + '/' + game.maxSlots, W / 2, startY + 30);
+
+  for (let i = 0; i < types.length; i++) {
+    const type = types[i];
+    const def = SHIP_TYPES[type];
+    const cardX = 80 + i * 190;
+    const cardY = startY + 50;
+    const cardW = 170;
+    const cardH = 260;
+
+    const canBuy = game.gold >= def.cost && game.escortShips.length < game.maxSlots;
+
+    ctx.fillStyle = canBuy ? '#0d2a1a' : '#1a1a2a';
+    ctx.fillRect(cardX, cardY, cardW, cardH);
+    ctx.strokeStyle = canBuy ? '#44aa66' : '#333355';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cardX, cardY, cardW, cardH);
+
+    // Ship icon
+    ctx.fillStyle = def.color;
+    ctx.beginPath();
+    ctx.arc(cardX + cardW / 2, cardY + 40, def.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(def.name, cardX + cardW / 2, cardY + 70);
+
+    ctx.font = '11px Segoe UI';
+    ctx.fillStyle = '#aaaaaa';
+    const stats = [
+      'HP: ' + def.hp,
+      'Damage: ' + def.damage,
+      'Fire Rate: ' + def.fireRate.toFixed(2) + 's',
+      'Range: ' + def.range,
+      'Speed: ' + def.speed,
+      'Tier: ' + def.tier,
+    ];
+    for (let j = 0; j < stats.length; j++) {
+      ctx.fillText(stats[j], cardX + cardW / 2, cardY + 95 + j * 18);
+    }
+
+    // Cost
+    ctx.fillStyle = canBuy ? '#ffd700' : '#886600';
+    ctx.font = 'bold 16px Segoe UI';
+    ctx.fillText(def.cost + 'g', cardX + cardW / 2, cardY + 220);
+
+    // Buy button
+    if (canBuy) {
+      ctx.fillStyle = '#1a5a2a';
+      ctx.fillRect(cardX + 20, cardY + 232, cardW - 40, 22);
+      ctx.strokeStyle = '#44ff66';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cardX + 20, cardY + 232, cardW - 40, 22);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '11px Segoe UI';
+      ctx.fillText('BUY', cardX + cardW / 2, cardY + 247);
+    }
+  }
+}
+
+function drawShopUpgrade(startY) {
+  ctx.fillStyle = '#cccccc';
+  ctx.font = 'bold 16px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('Upgrade Your Ships', W / 2, startY + 10);
+
+  if (game.escortShips.length === 0) {
+    ctx.fillStyle = '#888888';
+    ctx.font = '14px Segoe UI';
+    ctx.fillText('No ships to upgrade. Buy some first!', W / 2, startY + 80);
+    return;
+  }
+
+  // Ship selector
+  for (let i = 0; i < game.escortShips.length; i++) {
+    const s = game.escortShips[i];
+    const bx = W / 2 - (game.escortShips.length * 80) / 2 + i * 80;
+    const by = startY + 30;
+    const selected = game.shopSelectedShip === i;
+    ctx.fillStyle = selected ? '#1a4a7a' : '#0d1f3c';
+    ctx.fillRect(bx, by, 72, 50);
+    ctx.strokeStyle = selected ? '#44aaff' : '#1a3a5c';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, 72, 50);
+    ctx.fillStyle = s.color;
+    ctx.beginPath();
+    ctx.arc(bx + 36, by + 20, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '9px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.name.split(' ')[0], bx + 36, by + 44);
+  }
+
+  if (game.shopSelectedShip < 0 || game.shopSelectedShip >= game.escortShips.length) {
+    ctx.fillStyle = '#888888';
+    ctx.font = '14px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('Select a ship above to upgrade', W / 2, startY + 140);
+    return;
+  }
+
+  const ship = game.escortShips[game.shopSelectedShip];
+  const upgradeTypes = Object.keys(UPGRADE_DEFS);
+  const uy = startY + 100;
+
+  for (let i = 0; i < upgradeTypes.length; i++) {
+    const ut = upgradeTypes[i];
+    const def = UPGRADE_DEFS[ut];
+    const level = ship.upgrades[ut];
+    const maxed = level >= def.maxLevel;
+    const cost = maxed ? 0 : ship.getUpgradeCost(ut);
+    const canUpgrade = !maxed && game.gold >= cost;
+
+    const bx = 120 + i * 175;
+    const by = uy;
+    const bw = 160;
+    const bh = 180;
+
+    ctx.fillStyle = canUpgrade ? '#0d2a1a' : '#1a1a2a';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = canUpgrade ? '#44aa66' : '#333355';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(def.name, bx + bw / 2, by + 25);
+
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = '11px Segoe UI';
+    ctx.fillText(def.desc, bx + bw / 2, by + 45);
+
+    // Level bar
+    ctx.fillStyle = '#333';
+    ctx.fillRect(bx + 20, by + 60, bw - 40, 12);
+    for (let j = 0; j < def.maxLevel; j++) {
+      const segX = bx + 20 + j * ((bw - 40) / def.maxLevel);
+      const segW = (bw - 40) / def.maxLevel - 2;
+      ctx.fillStyle = j < level ? '#44ff66' : '#1a1a2a';
+      ctx.fillRect(segX, by + 60, segW, 12);
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '10px Segoe UI';
+    ctx.fillText('Level ' + level + '/' + def.maxLevel, bx + bw / 2, by + 90);
+
+    // Current stat
+    let statText = '';
+    if (ut === 'hull') statText = 'HP: ' + ship.getMaxHp();
+    else if (ut === 'damage') statText = 'DMG: ' + ship.getDamage().toFixed(1);
+    else if (ut === 'fireRate') statText = 'Rate: ' + ship.getFireRate().toFixed(2) + 's';
+    else if (ut === 'range') statText = 'Range: ' + ship.getRange().toFixed(0);
+    ctx.fillStyle = '#88ddff';
+    ctx.fillText(statText, bx + bw / 2, by + 110);
+
+    if (!maxed) {
+      ctx.fillStyle = canUpgrade ? '#ffd700' : '#886600';
+      ctx.font = 'bold 14px Segoe UI';
+      ctx.fillText(cost + 'g', bx + bw / 2, by + 135);
+
+      if (canUpgrade) {
+        ctx.fillStyle = '#1a5a2a';
+        ctx.fillRect(bx + 20, by + 148, bw - 40, 22);
+        ctx.strokeStyle = '#44ff66';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx + 20, by + 148, bw - 40, 22);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '11px Segoe UI';
+        ctx.fillText('UPGRADE', bx + bw / 2, by + 163);
+      }
+    } else {
+      ctx.fillStyle = '#44ff66';
+      ctx.font = 'bold 14px Segoe UI';
+      ctx.fillText('MAXED', bx + bw / 2, by + 140);
+    }
+  }
+
+  // Ammo type selector
+  const ammoY = uy + 200;
+  ctx.fillStyle = '#cccccc';
+  ctx.font = 'bold 13px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('Ammo Type: ' + AMMO_TYPES[ship.ammo].name, W / 2, ammoY);
+  const ammoKeys = Object.keys(AMMO_TYPES);
+  for (let i = 0; i < ammoKeys.length; i++) {
+    const at = AMMO_TYPES[ammoKeys[i]];
+    const abx = 120 + i * 230;
+    const aby = ammoY + 10;
+    const active = ship.ammo === ammoKeys[i];
+    const owned = ammoKeys[i] === 'standard' || ship['has_' + ammoKeys[i]];
+    const canBuy = !owned && game.gold >= at.cost;
+
+    ctx.fillStyle = active ? '#0d3a2a' : '#1a1a2a';
+    ctx.fillRect(abx, aby, 210, 45);
+    ctx.strokeStyle = active ? '#44ff66' : '#333355';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(abx, aby, 210, 45);
+    ctx.fillStyle = at.color;
+    ctx.font = 'bold 12px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText(at.name, abx + 10, aby + 18);
+    ctx.fillStyle = '#aaa';
+    ctx.font = '10px Segoe UI';
+    ctx.fillText(at.desc, abx + 10, aby + 34);
+
+    if (!owned && at.cost > 0) {
+      ctx.fillStyle = canBuy ? '#ffd700' : '#886600';
+      ctx.font = 'bold 11px Segoe UI';
+      ctx.textAlign = 'right';
+      ctx.fillText(at.cost + 'g', abx + 200, aby + 26);
+    } else if (owned && !active) {
+      ctx.fillStyle = '#44aa66';
+      ctx.font = '10px Segoe UI';
+      ctx.textAlign = 'right';
+      ctx.fillText('EQUIP', abx + 200, aby + 26);
+    } else if (active) {
+      ctx.fillStyle = '#44ff66';
+      ctx.font = '10px Segoe UI';
+      ctx.textAlign = 'right';
+      ctx.fillText('ACTIVE', abx + 200, aby + 26);
+    }
+  }
+}
+
+function drawShopSlots(startY) {
+  ctx.fillStyle = '#cccccc';
+  ctx.font = 'bold 16px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('Buy More Ship Slots', W / 2, startY + 10);
+  ctx.font = '12px Segoe UI';
+  ctx.fillStyle = '#888888';
+  ctx.fillText('Current Slots: ' + game.maxSlots, W / 2, startY + 30);
+
+  for (let i = 0; i < SLOT_UPGRADES.length; i++) {
+    const su = SLOT_UPGRADES[i];
+    const bx = W / 2 - 200;
+    const by = startY + 60 + i * 55;
+    const bw = 400;
+    const bh = 45;
+
+    const owned = game.maxSlots >= su.slot;
+    const available = !owned && game.wave >= su.waveReq && game.gold >= su.cost;
+    const locked = !owned && game.wave < su.waveReq;
+
+    ctx.fillStyle = owned ? '#1a3a1a' : available ? '#0d2a1a' : '#1a1a2a';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = owned ? '#44ff66' : available ? '#44aa66' : '#333355';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText('Slot ' + su.slot, bx + 15, by + 20);
+
+    if (owned) {
+      ctx.fillStyle = '#44ff66';
+      ctx.font = '12px Segoe UI';
+      ctx.fillText('OWNED', bx + 15, by + 36);
+    } else if (locked) {
+      ctx.fillStyle = '#888888';
+      ctx.font = '12px Segoe UI';
+      ctx.fillText('Requires Wave ' + su.waveReq, bx + 15, by + 36);
+    } else {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '12px Segoe UI';
+      ctx.fillText(su.cost + 'g', bx + 15, by + 36);
+    }
+
+    if (available) {
+      ctx.fillStyle = '#1a5a2a';
+      ctx.fillRect(bx + bw - 90, by + 8, 75, 28);
+      ctx.strokeStyle = '#44ff66';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx + bw - 90, by + 8, 75, 28);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '11px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('BUY', bx + bw - 52, by + 27);
+    }
+  }
+}
+
+function drawShopSell(startY) {
+  ctx.fillStyle = '#cccccc';
+  ctx.font = 'bold 16px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('Sell Ships', W / 2, startY + 10);
+
+  if (game.escortShips.length === 0) {
+    ctx.fillStyle = '#888888';
+    ctx.font = '14px Segoe UI';
+    ctx.fillText('No ships to sell.', W / 2, startY + 80);
+    return;
+  }
+
+  for (let i = 0; i < game.escortShips.length; i++) {
+    const s = game.escortShips[i];
+    const bx = W / 2 - 200;
+    const by = startY + 40 + i * 60;
+    const bw = 400;
+    const bh = 50;
+
+    ctx.fillStyle = '#1a1a2a';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = '#aa4444';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    ctx.fillStyle = s.color;
+    ctx.beginPath();
+    ctx.arc(bx + 25, by + 25, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText(s.name, bx + 45, by + 20);
+
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = '11px Segoe UI';
+    const upgradeStr = 'H:' + s.upgrades.hull + ' D:' + s.upgrades.damage + ' F:' + s.upgrades.fireRate + ' R:' + s.upgrades.range;
+    ctx.fillText(upgradeStr, bx + 45, by + 38);
+
+    const sellPrice = s.getSellPrice();
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 13px Segoe UI';
+    ctx.textAlign = 'right';
+    ctx.fillText('+' + sellPrice + 'g', bx + bw - 100, by + 30);
+
+    ctx.fillStyle = '#5a1a1a';
+    ctx.fillRect(bx + bw - 80, by + 10, 70, 28);
+    ctx.strokeStyle = '#ff4444';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx + bw - 80, by + 10, 70, 28);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '11px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('SELL', bx + bw - 45, by + 29);
+  }
+}
+
+function drawShopMissiles(startY) {
+  ctx.fillStyle = '#cccccc';
+  ctx.font = 'bold 16px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('Missile Defense', W / 2, startY + 10);
+
+  ctx.fillStyle = '#aaaaaa';
+  ctx.font = '12px Segoe UI';
+  ctx.fillText('Interceptor Missiles: ' + game.interceptorMissiles + '/10', W / 2, startY + 35);
+  ctx.fillText('Click on incoming missiles during combat to intercept them!', W / 2, startY + 55);
+
+  const costs = [
+    { amount: 1, cost: 50 },
+    { amount: 3, cost: 120 },
+    { amount: 5, cost: 180 },
+  ];
+
+  for (let i = 0; i < costs.length; i++) {
+    const c = costs[i];
+    const bx = W / 2 - 150;
+    const by = startY + 80 + i * 55;
+    const bw = 300;
+    const bh = 45;
+
+    const canBuy = game.gold >= c.cost && game.interceptorMissiles + c.amount <= 10;
+
+    ctx.fillStyle = canBuy ? '#0d2a1a' : '#1a1a2a';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = canBuy ? '#44aa66' : '#333355';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText('+' + c.amount + ' Interceptor' + (c.amount > 1 ? 's' : ''), bx + 15, by + 20);
+
+    ctx.fillStyle = canBuy ? '#ffd700' : '#886600';
+    ctx.font = '12px Segoe UI';
+    ctx.fillText(c.cost + 'g', bx + 15, by + 38);
+
+    if (canBuy) {
+      ctx.fillStyle = '#1a5a2a';
+      ctx.fillRect(bx + bw - 80, by + 8, 70, 28);
+      ctx.strokeStyle = '#44ff66';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx + bw - 80, by + 8, 70, 28);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '11px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('BUY', bx + bw - 45, by + 27);
+    }
+  }
+
+  // Missile info
+  ctx.fillStyle = '#888888';
+  ctx.font = '11px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('Missiles appear starting from Wave 3', W / 2, startY + 260);
+  ctx.fillText('They target convoy ships and deal 150 damage', W / 2, startY + 278);
+  ctx.fillText('Click near a missile to intercept it (costs 1 interceptor)', W / 2, startY + 296);
+}
+
+function drawShopMarket(startY) {
+  ctx.fillStyle = '#cccccc';
+  ctx.font = 'bold 16px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('Black Market', W / 2, startY + 10);
+  ctx.fillStyle = '#888888';
+  ctx.font = '12px Segoe UI';
+  ctx.fillText('Shady deals - new offers each wave!', W / 2, startY + 30);
+
+  if (game.blackMarketOffers.length === 0) {
+    ctx.fillStyle = '#666';
+    ctx.font = '14px Segoe UI';
+    ctx.fillText('No offers available.', W / 2, startY + 100);
+    return;
+  }
+
+  for (let i = 0; i < game.blackMarketOffers.length; i++) {
+    const o = game.blackMarketOffers[i];
+    const bx = W / 2 - 200;
+    const by = startY + 50 + i * 65;
+    const bw = 400;
+    const bh = 55;
+    const canBuy = game.gold >= o.cost;
+
+    ctx.fillStyle = canBuy ? '#1a1a0d' : '#1a1a2a';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = canBuy ? '#aa8844' : '#333355';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 13px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText(o.name, bx + 15, by + 22);
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = '11px Segoe UI';
+    ctx.fillText(o.desc, bx + 15, by + 40);
+
+    ctx.fillStyle = canBuy ? '#ffd700' : '#886600';
+    ctx.font = 'bold 13px Segoe UI';
+    ctx.textAlign = 'right';
+    ctx.fillText(o.cost + 'g', bx + bw - 90, by + 32);
+
+    if (canBuy) {
+      ctx.fillStyle = '#3a2a0a';
+      ctx.fillRect(bx + bw - 80, by + 12, 70, 28);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx + bw - 80, by + 12, 70, 28);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '11px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('BUY', bx + bw - 45, by + 31);
+    }
+  }
+}
+
+// ============== SHOP CLICK ==============
+function handleShopClick(mx, my) {
+  // Tab clicks
+  const tabs = ['buy', 'upgrade', 'slots', 'sell', 'missiles', 'market'];
+  const tabW = 140;
+  const tabH = 32;
+  const tabY = 85;
+  const tabStartX = W / 2 - (tabs.length * tabW) / 2;
+  for (let i = 0; i < tabs.length; i++) {
+    const tx = tabStartX + i * tabW;
+    if (mx >= tx && mx <= tx + tabW - 4 && my >= tabY && my <= tabY + tabH) {
+      game.shopTab = tabs[i];
+      game.shopSelectedShip = -1;
+      return;
+    }
+  }
+
+  // NEXT WAVE / RETRY button (right side)
+  const nextBtnX = W / 2 + 10;
+  const nextBtnY = H - 55;
+  const nextBtnW = 200;
+  const nextBtnH = 42;
+  if (mx >= nextBtnX && mx <= nextBtnX + nextBtnW && my >= nextBtnY && my <= nextBtnY + nextBtnH) {
+    const nextWave = game.waveFailed ? game.wave : game.wave + 1;
+    game.retryAvailable = false;
+    game.replayGoldMulti = 1.0;
+    game.isReplay = false;
+    game.selectedFarmWave = 0;
+    ensurePlayerHasShip();
+    setupWave(nextWave);
+    game.state = 'PLAYING';
+    return;
+  }
+
+  // FARM wave selector buttons (left side)
+  if (game.highestCompletedWave > 0) {
+    const farmX = 10;
+    const farmY = H - 55;
+    const farmH = 42;
+    const maxShow = Math.min(game.highestCompletedWave, 8);
+    const wBtnW = Math.min(48, Math.floor((W / 2 - 30) / maxShow));
+
+    for (let i = 0; i < maxShow; i++) {
+      const waveNum = game.highestCompletedWave - maxShow + 1 + i;
+      if (waveNum < 1) continue;
+      const bx = farmX + i * (wBtnW + 4);
+      if (mx >= bx && mx <= bx + wBtnW && my >= farmY && my <= farmY + farmH) {
+        game.selectedFarmWave = waveNum;
+        return;
+      }
+    }
+
+    // GO FARM button
+    if (game.selectedFarmWave > 0) {
+      const goX = farmX + maxShow * (wBtnW + 4) + 4;
+      const goW = 60;
+      if (mx >= goX && mx <= goX + goW && my >= farmY && my <= farmY + farmH) {
+        const savedWave = game.wave;
+        game.retryAvailable = false;
+        game.isReplay = true;
+        game.replayGoldMulti = 0.5;
+        game.replayWasFailed = game.waveFailed;
+        ensurePlayerHasShip();
+        setupWave(game.selectedFarmWave);
+        game.replayReturnWave = savedWave;
+        game.state = 'PLAYING';
+        return;
+      }
+    }
+  }
+
+  const contentY = 130;
+
+  if (game.shopTab === 'buy') {
+    const types = Object.keys(SHIP_TYPES);
+    for (let i = 0; i < types.length; i++) {
+      const type = types[i];
+      const def = SHIP_TYPES[type];
+      const cardX = 80 + i * 190;
+      const cardY = contentY + 50;
+
+      if (game.gold >= def.cost && game.escortShips.length < game.maxSlots) {
+        if (mx >= cardX + 20 && mx <= cardX + 150 && my >= cardY + 232 && my <= cardY + 254) {
+          game.gold -= def.cost;
+          game.escortShips.push(new EscortShip(type));
+          return;
+        }
+      }
+    }
+  }
+
+  if (game.shopTab === 'upgrade') {
+    // Ship selector
+    for (let i = 0; i < game.escortShips.length; i++) {
+      const bx = W / 2 - (game.escortShips.length * 80) / 2 + i * 80;
+      const by = contentY + 30;
+      if (mx >= bx && mx <= bx + 72 && my >= by && my <= by + 50) {
+        game.shopSelectedShip = i;
+        return;
+      }
+    }
+
+    if (game.shopSelectedShip >= 0 && game.shopSelectedShip < game.escortShips.length) {
+      const ship = game.escortShips[game.shopSelectedShip];
+      const upgradeTypes = Object.keys(UPGRADE_DEFS);
+      const uy = contentY + 100;
+
+      for (let i = 0; i < upgradeTypes.length; i++) {
+        const ut = upgradeTypes[i];
+        const def = UPGRADE_DEFS[ut];
+        const level = ship.upgrades[ut];
+        if (level >= def.maxLevel) continue;
+        const cost = ship.getUpgradeCost(ut);
+        if (game.gold < cost) continue;
+
+        const bx = 120 + i * 175;
+        const by = uy;
+        if (mx >= bx + 20 && mx <= bx + 140 && my >= by + 148 && my <= by + 170) {
+          game.gold -= ship.applyUpgrade(ut);
+          playSound('buy');
+          return;
+        }
+      }
+
+      // Ammo clicks
+      const ammoY = uy + 200 + 10;
+      const ammoKeys = Object.keys(AMMO_TYPES);
+      for (let i = 0; i < ammoKeys.length; i++) {
+        const abx = 120 + i * 230;
+        if (mx >= abx && mx <= abx + 210 && my >= ammoY && my <= ammoY + 45) {
+          const at = AMMO_TYPES[ammoKeys[i]];
+          const owned = ammoKeys[i] === 'standard' || ship['has_' + ammoKeys[i]];
+          if (owned) {
+            ship.ammo = ammoKeys[i];
+          } else if (game.gold >= at.cost) {
+            game.gold -= at.cost;
+            ship['has_' + ammoKeys[i]] = true;
+            ship.ammo = ammoKeys[i];
+            playSound('buy');
+          }
+          return;
+        }
+      }
+    }
+  }
+
+  if (game.shopTab === 'slots') {
+    for (let i = 0; i < SLOT_UPGRADES.length; i++) {
+      const su = SLOT_UPGRADES[i];
+      const bx = W / 2 - 200;
+      const by = contentY + 60 + i * 55;
+
+      const owned = game.maxSlots >= su.slot;
+      const available = !owned && game.wave >= su.waveReq && game.gold >= su.cost;
+
+      if (available) {
+        if (mx >= bx + 310 && mx <= bx + 400 && my >= by + 8 && my <= by + 36) {
+          game.gold -= su.cost;
+          game.maxSlots = su.slot;
+          return;
+        }
+      }
+    }
+  }
+
+  if (game.shopTab === 'sell') {
+    for (let i = 0; i < game.escortShips.length; i++) {
+      const s = game.escortShips[i];
+      const bx = W / 2 - 200;
+      const by = contentY + 40 + i * 60;
+
+      if (mx >= bx + 320 && mx <= bx + 400 && my >= by + 10 && my <= by + 38) {
+        game.gold += s.getSellPrice();
+        game.escortShips.splice(i, 1);
+        return;
+      }
+    }
+  }
+
+  if (game.shopTab === 'missiles') {
+    const costs = [
+      { amount: 1, cost: 50 },
+      { amount: 3, cost: 120 },
+      { amount: 5, cost: 180 },
+    ];
+    for (let i = 0; i < costs.length; i++) {
+      const c = costs[i];
+      const bx = W / 2 - 150;
+      const by = contentY + 80 + i * 55;
+
+      const canBuy = game.gold >= c.cost && game.interceptorMissiles + c.amount <= 10;
+      if (canBuy) {
+        if (mx >= bx + 220 && mx <= bx + 300 && my >= by + 8 && my <= by + 36) {
+          game.gold -= c.cost;
+          game.interceptorMissiles += c.amount;
+          return;
+        }
+      }
+    }
+  }
+
+  if (game.shopTab === 'market') {
+    for (let i = 0; i < game.blackMarketOffers.length; i++) {
+      const o = game.blackMarketOffers[i];
+      const bx = W / 2 - 200;
+      const by = contentY + 50 + i * 65;
+      const bw = 400;
+      if (game.gold >= o.cost) {
+        if (mx >= bx + bw - 80 && mx <= bx + bw - 10 && my >= by + 12 && my <= by + 40) {
+          game.gold -= o.cost;
+          o.apply();
+          game.blackMarketOffers.splice(i, 1);
+          return;
+        }
+      }
+    }
+  }
+}
+
+// ============== GAME CLICK ==============
+function handleGameClick(mx, my) {
+  // Skill buttons (tap on mobile)
+  const skBarY = H - 40;
+  const skillKeys = Object.keys(SKILLS);
+  for (let i = 0; i < skillKeys.length; i++) {
+    const bx = 10 + i * 130;
+    if (mx >= bx && mx <= bx + 120 && my >= skBarY && my <= skBarY + 30) {
+      const id = skillKeys[i];
+      const sk = SKILLS[id];
+      if (game.wave >= sk.unlockWave && game.skillCooldowns[id] <= 0) {
+        activateSkill(id);
+      }
+      return;
+    }
+  }
+
+  // Intercept missiles
+  for (let i = game.missiles.length - 1; i >= 0; i--) {
+    const m = game.missiles[i];
+    const interceptRadius = isMobile ? 80 : 60;
+    if (m.launched && dist({ x: mx, y: my }, m) < interceptRadius) {
+      if (game.interceptorMissiles > 0) {
+        game.interceptorMissiles--;
+        m.alive = false;
+        spawnExplosion(m.x, m.y, 20);
+        addFloatingText(m.x, m.y - 15, 'INTERCEPTED!', '#44ff66');
+        game.score += 50;
+        game.totalIntercepts++;
+        playSound('intercept');
+        return;
+      } else {
+        if (game.noInterceptorTimer <= 0) {
+          addFloatingText(mx, my - 15, 'No interceptors!', '#ff8844');
+          game.noInterceptorTimer = 1;
+        }
+      }
+    }
+  }
+}
+
+// ============== MENU ==============
+function drawMenu() {
+  drawOcean();
+
+  // Title
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 48px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillText('HORMUZ WAR', W / 2, 200);
+
+  ctx.fillStyle = '#88bbdd';
+  ctx.font = '20px Segoe UI';
+  ctx.fillText('Naval Escort Commander', W / 2, 240);
+
+  ctx.fillStyle = '#aaaaaa';
+  ctx.font = '14px Segoe UI';
+  ctx.fillText('Protect the convoy through the Strait of Hormuz', W / 2, 280);
+  ctx.fillText('Your escort ships fight automatically in formation', W / 2, 305);
+  ctx.fillText('Tap/Click to intercept incoming missiles', W / 2, 330);
+  ctx.fillText('Tap skill buttons or press 1/2/3 for special skills', W / 2, 355);
+  ctx.fillText('Weather changes each wave | Earn achievements for gold', W / 2, 380);
+
+  // Start button
+  const btnX = W / 2 - 100;
+  const btnY = 440;
+  ctx.fillStyle = '#1a4a2a';
+  ctx.fillRect(btnX, btnY, 200, 50);
+  ctx.strokeStyle = '#44ff66';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(btnX, btnY, 200, 50);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 20px Segoe UI';
+  ctx.fillText('START GAME', W / 2, btnY + 33);
+
+  ctx.fillStyle = '#666666';
+  ctx.font = '12px Segoe UI';
+  ctx.fillText('v2.0 - Enhanced Edition', W / 2, H - 20);
+}
+
+// ============== LEADERBOARD (GOOGLE SHEETS) ==============
+const HW_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuvvW87ycYTB7CedfZfUu1c1X1Nn82715WRRy532DqjRi-ROLMiKslrUJuBPt9u3iQXA/exec';
+
+async function hwGetLeaderboard() {
+  try {
+    if (HW_SCRIPT_URL.startsWith('PASTE_')) return hwGetLocalBoard();
+    const response = await fetch(HW_SCRIPT_URL, { method: 'GET', redirect: 'follow' });
+    const data = await response.json();
+    // Also cache to localStorage
+    localStorage.setItem('ready_hormuzwar_scores', JSON.stringify(data.slice(0, 10)));
+    return data;
+  } catch (e) {
+    return hwGetLocalBoard();
+  }
+}
+
+function hwGetLocalBoard() {
+  const data = localStorage.getItem('ready_hormuzwar_scores');
+  return data ? JSON.parse(data) : [];
+}
+
+async function hwSaveScore() {
+  const nameInput = document.getElementById('hw-player-name');
+  const name = nameInput.value.trim().toUpperCase() || 'ANONYMOUS';
+  const score = game.score;
+  const btn = document.getElementById('hw-save-btn');
+  btn.disabled = true; btn.innerText = 'ĐANG GHI...';
+  try {
+    if (!HW_SCRIPT_URL.startsWith('PASTE_')) {
+      await fetch(HW_SCRIPT_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, score }) });
+    }
+    // Save to localStorage as backup
+    const board = hwGetLocalBoard();
+    board.push({ name, score });
+    board.sort((a, b) => b.score - a.score);
+    localStorage.setItem('ready_hormuzwar_scores', JSON.stringify(board.slice(0, 10)));
+    document.getElementById('hw-save-section').style.display = 'none';
+    setTimeout(hwDisplayLeaderboard, 500);
+  } catch (e) {
+    btn.disabled = false; btn.innerText = 'THỬ LẠI';
+  }
+}
+
+async function hwDisplayLeaderboard() {
+  const list = document.getElementById('hw-leaderboard-list');
+  list.innerHTML = '<li style="text-align:center;color:#0ff;padding:10px;font-size:12px;">ĐANG TẢI...</li>';
+  const board = await hwGetLeaderboard();
+  if (board.length === 0) {
+    list.innerHTML = '<li style="text-align:center;color:#666;padding:10px;">CHƯA CÓ KỶ LỤC</li>';
+    return;
+  }
+  list.innerHTML = board.slice(0, 10).map((item, index) =>
+    `<li class="hw-leaderboard-item"><span class="name">${index + 1}. ${item.name.toUpperCase()}</span><span class="points">${item.score}</span></li>`
+  ).join('');
+}
+
+function showGameOverScreen() {
+  document.getElementById('final-score').innerText = 'SCORE: ' + game.score;
+  document.getElementById('final-stats').innerText = 'Waves: ' + (game.wave - 1) + '  |  Gold: ' + game.gold + '  |  Kills: ' + game.totalKills;
+  document.getElementById('hw-save-section').style.display = 'flex';
+  document.getElementById('hw-save-btn').disabled = false;
+  document.getElementById('hw-save-btn').innerText = 'GHI DANH BẢNG VÀNG';
+  document.getElementById('hw-player-name').value = '';
+  document.getElementById('game-over-screen').style.display = 'block';
+  hwDisplayLeaderboard();
+}
+
+function closeGameOverAndRestart() {
+  document.getElementById('game-over-screen').style.display = 'none';
+  game.state = 'MENU';
+}
+
+document.getElementById('hw-save-btn').addEventListener('click', hwSaveScore);
+
+// ============== GAME OVER ==============
+let gameOverScreenShown = false;
+
+function drawGameOver() {
+  drawOcean();
+  ctx.fillStyle = 'rgba(0,0,0,0.8)';
+  ctx.fillRect(0, 0, W, H);
+  if (!gameOverScreenShown) {
+    gameOverScreenShown = true;
+    showGameOverScreen();
+  }
+}
+
+// ============== INPUT ==============
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  game.mouseX = (e.clientX - rect.left) * (W / rect.width);
+  game.mouseY = (e.clientY - rect.top) * (H / rect.height);
+});
+
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (W / rect.width);
+  const my = (e.clientY - rect.top) * (H / rect.height);
+
+  initAudio();
+  if (game.state === 'MENU') {
+    const btnX = W / 2 - 100;
+    const btnY = 440;
+    if (mx >= btnX && mx <= btnX + 200 && my >= btnY && my <= btnY + 50) {
+      startNewGame();
+    }
+  } else if (game.state === 'PLAYING') {
+    handleGameClick(mx, my);
+  } else if (game.state === 'SHOP') {
+    handleShopClick(mx, my);
+  } else if (game.state === 'GAMEOVER') {
+    // Handled by HTML overlay
+  }
+});
+
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+document.addEventListener('keydown', e => {
+  if (game.state !== 'PLAYING') return;
+  for (const [id, sk] of Object.entries(SKILLS)) {
+    if (e.key === sk.key && game.wave >= sk.unlockWave && game.skillCooldowns[id] <= 0) {
+      activateSkill(id);
+      break;
+    }
+  }
+});
+
+function activateSkill(id) {
+  game.skillCooldowns[id] = SKILLS[id].cooldown;
+  playSound('skill');
+  if (id === 'airstrike') {
+    for (const e of game.enemies) {
+      e.hp -= 80;
+      if (e.hp <= 0) {
+        spawnExplosion(e.x, e.y, 15);
+        const g = Math.floor(e.gold * game.replayGoldMulti);
+        game.gold += g;
+        game.score += g;
+        game.waveGoldEarned += g;
+        game.totalKills++;
+        if (e.isBoss) game.bossKills++;
+        addFloatingText(e.x, e.y - 15, '+' + g + 'g', '#ffd700');
+      } else {
+        spawnExplosion(e.x, e.y, 8);
+        addFloatingText(e.x, e.y - 15, '-80', '#ff8844');
+      }
+    }
+    game.notification = 'AIR STRIKE DEPLOYED!';
+    game.notificationTimer = 1.5;
+  } else if (id === 'repair') {
+    for (const s of game.escortShips) {
+      s.hp = Math.min(s.hp + 100, s.maxHp);
+    }
+    for (const c of game.convoyShips) {
+      if (c.hp > 0) c.hp = Math.min(c.hp + 100, c.maxHp);
+    }
+    game.notification = 'REPAIR DRONES DISPATCHED!';
+    game.notificationTimer = 1.5;
+  } else if (id === 'emp') {
+    game.empActive = 3;
+    for (const e of game.enemies) {
+      addFloatingText(e.x, e.y - 15, 'STUNNED!', '#88aaff');
+    }
+    game.notification = 'EMP BLAST ACTIVATED!';
+    game.notificationTimer = 1.5;
+  }
+}
+
+// ============== START ==============
+function startNewGame() {
+  gameOverScreenShown = false;
+  document.getElementById('game-over-screen').style.display = 'none';
+  game.state = 'PLAYING';
+  game.gold = 300;
+  game.score = 0;
+  game.wave = 0;
+  game.failedWaves = 0;
+  game.maxSlots = 3;
+  game.interceptorMissiles = 5;
+  game.escortShips = [];
+  game.escortShips.push(new EscortShip('patrol'));
+  game.retryAvailable = false;
+  game.noInterceptorTimer = 0;
+  game.totalKills = 0;
+  game.totalIntercepts = 0;
+  game.hadPerfectWave = false;
+  game.bossKills = 0;
+  game.unlockedAchievements = new Set();
+  game.achievementPopup = null;
+  game.achievementPopupTimer = 0;
+  game.skillCooldowns = { airstrike: 0, repair: 0, emp: 0 };
+  game.empActive = 0;
+  game.highestCompletedWave = 0;
+  game.selectedFarmWave = 0;
+  game.isReplay = false;
+  game.replayReturnWave = 0;
+  game.replayGoldMulti = 1.0;
+  setupWave(1);
+}
+
+// ============== MAIN LOOP ==============
+let lastTime = 0;
+function gameLoop(timestamp) {
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+
+  if (game.state === 'MENU') {
+    drawMenu();
+  } else if (game.state === 'PLAYING') {
+    updateGame(dt);
+    drawOcean();
+    drawWeather(dt);
+    // Draw convoy
+    for (const c of game.convoyShips) {
+      if (c.hp > 0) c.draw();
+    }
+    // Draw escorts
+    for (const s of game.escortShips) s.draw();
+    // Draw enemies
+    for (const e of game.enemies) e.draw();
+    // Draw projectiles
+    for (const p of game.projectiles) p.draw();
+    // Draw missiles
+    for (const m of game.missiles) m.draw();
+    // Draw explosions
+    for (const e of game.explosions) e.draw();
+    // Floating texts
+    for (const ft of game.floatingTexts) {
+      ctx.globalAlpha = Math.min(1, ft.life);
+      ctx.fillStyle = ft.color;
+      ctx.font = 'bold 13px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText(ft.text, ft.x, ft.y);
+    }
+    ctx.globalAlpha = 1;
+    drawHUD();
+    drawMinimap();
+
+    // Wave complete overlay (combined with notification)
+    if (game.waveComplete && game.waveCompleteTimer > 0) {
+      const alpha = Math.min(1, game.waveCompleteTimer * 0.5);
+      ctx.globalAlpha = alpha;
+      // Dim background
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(0, 0, W, H);
+      // Central panel
+      const panelW = 400, panelH = 140;
+      const panelX = W / 2 - panelW / 2, panelY = H / 2 - panelH / 2;
+      ctx.fillStyle = 'rgba(10,15,30,0.9)';
+      ctx.fillRect(panelX, panelY, panelW, panelH);
+      ctx.strokeStyle = game.waveFailed ? '#ff4444' : '#44ff66';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(panelX, panelY, panelW, panelH);
+      // Title
+      ctx.fillStyle = game.waveFailed ? '#ff4444' : '#44ff66';
+      ctx.font = 'bold 32px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText(game.waveFailed ? 'WAVE FAILED' : 'WAVE COMPLETE!', W / 2, panelY + 40);
+      // Gold earned
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 18px Segoe UI';
+      ctx.fillText('Gold Earned: ' + game.waveGoldEarned, W / 2, panelY + 75);
+      // Convoy survived or fail message
+      if (!game.waveFailed) {
+        ctx.fillStyle = '#88ddff';
+        ctx.font = '16px Segoe UI';
+        ctx.fillText('Convoy Survived: ' + game.survivedConvoy + '/' + game.totalConvoy, W / 2, panelY + 105);
+      } else if (game.isReplay) {
+        ctx.fillStyle = '#88bbff';
+        ctx.font = '14px Segoe UI';
+        ctx.fillText('No penalty - replay wave', W / 2, panelY + 105);
+      } else {
+        ctx.fillStyle = '#ff8844';
+        ctx.font = '14px Segoe UI';
+        ctx.fillText('Lives remaining: ' + (game.maxFails - game.failedWaves), W / 2, panelY + 105);
+      }
+      ctx.globalAlpha = 1;
+    } else if (game.notification && game.notificationTimer > 0) {
+      // Non-wave notifications (skills, etc.)
+      const alpha = Math.min(1, game.notificationTimer);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(W / 2 - 220, H / 2 - 22, 440, 44);
+      ctx.strokeStyle = '#44aaff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(W / 2 - 220, H / 2 - 22, 440, 44);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 16px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText(game.notification, W / 2, H / 2 + 6);
+      ctx.globalAlpha = 1;
+    }
+
+    // Achievement popup
+    if (game.achievementPopup && game.achievementPopupTimer > 0) {
+      const ap = game.achievementPopup;
+      const alpha = Math.min(1, game.achievementPopupTimer);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = 'rgba(40,30,0,0.85)';
+      ctx.fillRect(W / 2 - 160, 50, 320, 50);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(W / 2 - 160, 50, 320, 50);
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 13px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('ACHIEVEMENT: ' + ap.name, W / 2, 72);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '11px Segoe UI';
+      ctx.fillText(ap.desc + ' (+' + ap.reward + 'g)', W / 2, 90);
+      ctx.globalAlpha = 1;
+    }
+
+    // Cursor for missile interception
+    if (game.missileNearCursor) {
+      canvas.style.cursor = 'crosshair';
+    } else {
+      canvas.style.cursor = 'default';
+    }
+  } else if (game.state === 'SHOP') {
+    drawShop();
+  } else if (game.state === 'GAMEOVER') {
+    drawGameOver();
+  }
+
+  // No interceptor timer
+  if (game.noInterceptorTimer > 0) game.noInterceptorTimer -= dt;
+
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
