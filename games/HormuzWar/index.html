@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="screen-orientation" content="landscape">
+<meta name="screen-orientation" content="any">
 <title>Hormuz War - Naval Escort Commander</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -41,6 +41,14 @@ canvas {
 #game-over-screen h1 { color: #ff4444; font-size: 28px; margin: 0 0 10px; text-shadow: 0 0 10px #f00; }
 #final-score { font-size: 22px; color: #ffd700; margin-bottom: 5px; }
 #final-stats { font-size: 14px; color: #aaa; margin-bottom: 12px; }
+@media (orientation: portrait) and (max-width: 600px) {
+  #game-over-screen { width: 95%; max-width: 95%; padding: 15px; }
+  #game-over-screen h1 { font-size: 24px; }
+  #final-score { font-size: 20px; }
+  .hw-save-form input { font-size: 16px; padding: 12px; }
+  .hw-save-form button { font-size: 16px; padding: 12px; }
+  .hw-btn-row button { font-size: 16px; padding: 12px; }
+}
 .hw-leaderboard { margin: 10px 0; text-align: left; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; }
 .hw-leaderboard h3 { margin-top: 0; color: #0ff; text-align: center; border-bottom: 1px solid #333; padding-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
 .hw-leaderboard-list { list-style: none; padding: 0; margin: 0; max-height: 140px; overflow-y: auto; }
@@ -58,39 +66,10 @@ canvas {
 .hw-btn-row button:hover { background: #44ff66; color: #000; }
 .hw-btn-row button.games-btn { border-color: #0ff; color: #0ff; }
 .hw-btn-row button.games-btn:hover { background: #0ff; color: #000; }
-#rotate-hint {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: #0a0a1a;
-  color: #88bbdd;
-  font-size: 20px;
-  z-index: 9999;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-}
-#rotate-hint .icon {
-  font-size: 60px;
-  animation: rotateHint 2s ease-in-out infinite;
-}
-@keyframes rotateHint {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(90deg); }
-}
-@media (orientation: portrait) and (max-width: 900px) {
-  #rotate-hint { display: flex; }
-  canvas { display: none; }
-}
+/* Portrait mobile: canvas may overflow horizontally */
 </style>
 </head>
 <body>
-<div id="rotate-hint">
-  <div class="icon">📱</div>
-  <div>Please rotate your device</div>
-  <div style="font-size:14px;color:#667788">This game is best played in landscape mode</div>
-</div>
 <canvas id="gameCanvas" width="900" height="700"></canvas>
 
 <div id="game-over-screen">
@@ -119,27 +98,30 @@ const W = 900, H = 700;
 
 // ============== MOBILE / RESPONSIVE ==============
 const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-const mScale = isMobile ? 1.5 : 1; // UI scale factor for mobile
+let isPortrait = window.innerHeight > window.innerWidth;
+let visW = W; // visible width in game coordinates
 
 function resizeCanvas() {
   const maxW = window.innerWidth;
   const maxH = window.innerHeight;
-  const scale = Math.min(maxW / W, maxH / H);
-  canvas.style.width = Math.floor(W * scale) + 'px';
-  canvas.style.height = Math.floor(H * scale) + 'px';
+  isPortrait = maxH > maxW;
+
+  if (isPortrait) {
+    // Portrait: fit canvas to FULL HEIGHT, CENTERED — visible area is center of game
+    const scale = maxH / H;
+    canvas.style.width = Math.floor(W * scale) + 'px';
+    canvas.style.height = maxH + 'px';
+    visW = Math.floor(maxW / scale);
+  } else {
+    // Landscape: fit both dimensions (normal)
+    const scale = Math.min(maxW / W, maxH / H);
+    canvas.style.width = Math.floor(W * scale) + 'px';
+    canvas.style.height = Math.floor(H * scale) + 'px';
+    visW = W;
+  }
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
-
-// Fullscreen API for mobile
-function requestFullscreen() {
-  const el = document.documentElement;
-  const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-  if (rfs) {
-    rfs.call(el).catch(() => {});
-  }
-}
-// Re-hide address bar on orientation change
 window.addEventListener('resize', () => { if (isMobile) window.scrollTo(0, 1); });
 if (isMobile) window.scrollTo(0, 1);
 
@@ -1670,11 +1652,11 @@ function drawWeather(dt) {
 }
 
 function drawHUD() {
-  const hudH = isMobile ? 48 : 36;
-  const hudFont = isMobile ? 'bold 18px Segoe UI' : 'bold 14px Segoe UI';
-  const hudY = isMobile ? 32 : 24;
+  // visLeft = left edge of visible area in game coords (centered)
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
 
   // Top bar
+  const hudH = 36;
   ctx.fillStyle = 'rgba(0,0,0,0.7)';
   ctx.fillRect(0, 0, W, hudH);
   ctx.strokeStyle = 'rgba(100,150,200,0.3)';
@@ -1684,34 +1666,34 @@ function drawHUD() {
   ctx.lineTo(W, hudH);
   ctx.stroke();
 
-  ctx.font = hudFont;
+  ctx.font = 'bold 14px Segoe UI';
   ctx.textAlign = 'left';
 
-  if (isMobile) {
-    // Mobile: 2-row HUD for readability
+  if (isPortrait) {
+    // Portrait: compact 2-row, positioned within visible centered area
     ctx.fillStyle = '#ffd700';
-    ctx.fillText('G:' + game.gold, 10, 20);
+    ctx.fillText('G:' + game.gold, vL + 5, 15);
     ctx.fillStyle = '#ffffff';
-    ctx.fillText('W:' + game.wave + (game.isReplay ? '(R)' : ''), 135, 20);
+    ctx.fillText('W:' + game.wave + (game.isReplay ? '(R)' : ''), vL + 80, 15);
     ctx.fillStyle = '#44aaff';
-    ctx.fillText('S:' + game.score, 270, 20);
+    ctx.fillText('S:' + game.score, vL + 155, 15);
     ctx.fillStyle = '#ff6644';
-    ctx.fillText('L:' + (game.maxFails - game.failedWaves), 400, 20);
-    ctx.fillStyle = '#88ddff';
-    ctx.fillText('Fleet:' + game.escortShips.length + '/' + game.maxSlots, 480, 20);
+    ctx.fillText('L:' + (game.maxFails - game.failedWaves), vL + 240, 15);
 
-    // Row 2
+    ctx.fillStyle = '#88ddff';
+    ctx.fillText('F:' + game.escortShips.length + '/' + game.maxSlots, vL + 5, 32);
     ctx.fillStyle = '#ffaa44';
-    ctx.fillText('Missile:' + game.interceptorMissiles, 10, 42);
+    ctx.fillText('M:' + game.interceptorMissiles, vL + 65, 32);
     const wName = WEATHER_TYPES[game.weather].name;
     const wColor = game.weather === 'clear' ? '#88ff88' : game.weather === 'fog' ? '#aabbcc' : game.weather === 'storm' ? '#8888ff' : '#6666aa';
     ctx.fillStyle = wColor;
-    ctx.fillText(wName, 200, 42);
+    ctx.fillText(wName, vL + 120, 32);
     const alive = game.convoyShips.filter(c => c.hp > 0).length;
     ctx.fillStyle = alive > 0 ? '#44ff88' : '#ff4444';
-    ctx.fillText('Convoy:' + alive + '/' + game.totalConvoy, 330, 42);
+    ctx.fillText('Conv:' + alive + '/' + game.totalConvoy, vL + 200, 32);
   } else {
-    // Desktop: single row
+    // Landscape: single row full width
+    const hudY = 24;
     ctx.fillStyle = '#ffd700';
     ctx.fillText('Gold: ' + game.gold, 10, hudY);
     ctx.fillStyle = '#ffffff';
@@ -1735,13 +1717,13 @@ function drawHUD() {
     ctx.fillText('Convoy: ' + alive + '/' + game.totalConvoy, W - 10, hudY);
   }
 
-  // Skill bar at bottom - larger on mobile
+  // Skill bar at bottom — positioned within visible area
   const skillKeys = Object.keys(SKILLS);
-  const skBtnW = isMobile ? 160 : 120;
-  const skBtnH = isMobile ? 50 : 30;
-  const skBarY = H - (isMobile ? 58 : 40);
-  const skGap = isMobile ? 170 : 130;
-  const skStartX = isMobile ? Math.floor((W - skillKeys.length * skGap) / 2) : 10;
+  const skBtnW = isPortrait ? Math.floor((visW - 20) / skillKeys.length - 5) : 120;
+  const skBtnH = 30;
+  const skBarY = H - (isPortrait ? 38 : 40);
+  const skGap = skBtnW + 5;
+  const skStartX = isPortrait ? vL + 5 : 10;
 
   for (let i = 0; i < skillKeys.length; i++) {
     const sk = SKILLS[skillKeys[i]];
@@ -1751,15 +1733,15 @@ function drawHUD() {
     ctx.fillStyle = locked ? 'rgba(30,30,30,0.7)' : cd > 0 ? 'rgba(40,20,20,0.7)' : 'rgba(20,40,20,0.7)';
     ctx.fillRect(bx, skBarY, skBtnW, skBtnH);
     ctx.strokeStyle = locked ? '#333' : cd > 0 ? '#663333' : '#44aa66';
-    ctx.lineWidth = isMobile ? 2 : 1;
+    ctx.lineWidth = 1;
     ctx.strokeRect(bx, skBarY, skBtnW, skBtnH);
     ctx.fillStyle = locked ? '#555' : cd > 0 ? '#aa6644' : '#ffffff';
-    ctx.font = isMobile ? 'bold 16px Segoe UI' : 'bold 11px Segoe UI';
+    ctx.font = 'bold 11px Segoe UI';
     ctx.textAlign = 'center';
-    ctx.fillText('[' + sk.key + '] ' + sk.name, bx + skBtnW / 2, skBarY + (isMobile ? 22 : 13));
-    ctx.font = isMobile ? '13px Segoe UI' : '9px Segoe UI';
+    ctx.fillText('[' + sk.key + '] ' + sk.name, bx + skBtnW / 2, skBarY + 13);
+    ctx.font = '9px Segoe UI';
     ctx.fillStyle = locked ? '#444' : cd > 0 ? '#ff8844' : '#88ff88';
-    ctx.fillText(locked ? 'Wave ' + sk.unlockWave : cd > 0 ? Math.ceil(cd) + 's' : 'Ready', bx + skBtnW / 2, skBarY + (isMobile ? 40 : 25));
+    ctx.fillText(locked ? 'Wave ' + sk.unlockWave : cd > 0 ? Math.ceil(cd) + 's' : 'Ready', bx + skBtnW / 2, skBarY + 25);
     if (cd > 0 && !locked) {
       const ratio = cd / sk.cooldown;
       ctx.fillStyle = 'rgba(255,100,50,0.2)';
@@ -1769,7 +1751,8 @@ function drawHUD() {
 }
 
 function drawMinimap() {
-  const mx = W - 110, my = 46, mw = 100, mh = 80;
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
+  const mx = isPortrait ? vL + visW - 110 : W - 110, my = 46, mw = 100, mh = 80;
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(mx, my, mw, mh);
   ctx.strokeStyle = 'rgba(100,150,200,0.3)';
@@ -2073,51 +2056,77 @@ function generateBlackMarket() {
 }
 
 // ============== SHOP ==============
+
 function drawShop() {
   // Background
   ctx.fillStyle = '#0a0a1a';
   ctx.fillRect(0, 0, W, H);
 
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
+  const cx = W / 2; // always centered now
+
   // Title
   ctx.fillStyle = '#ffffff';
-  ctx.font = isMobile ? 'bold 34px Segoe UI' : 'bold 28px Segoe UI';
+  ctx.font = 'bold 28px Segoe UI';
   ctx.textAlign = 'center';
-  ctx.fillText('MISSION COMMAND', W / 2, 40);
+  ctx.fillText('MISSION COMMAND', cx, 40);
 
-  ctx.font = isMobile ? '17px Segoe UI' : '14px Segoe UI';
+  ctx.font = '13px Segoe UI';
   ctx.fillStyle = '#aaaaaa';
-  ctx.fillText('Wave ' + game.wave + ' Complete | Gold: ' + game.gold + ' | Score: ' + game.score, W / 2, 65);
+  ctx.fillText('W:' + game.wave + ' | G:' + game.gold + ' | S:' + game.score, cx, 60);
 
   // Tabs
-  const tabs = [
-    { id: 'buy', label: 'Buy Ships' },
-    { id: 'upgrade', label: 'Upgrade Ships' },
-    { id: 'slots', label: 'Buy Slots' },
-    { id: 'sell', label: 'Sell Ships' },
-    { id: 'missiles', label: 'Missile Defense' },
-    { id: 'market', label: 'Black Market' },
+  const tabLabels = [
+    { id: 'buy', label: isPortrait ? 'Buy' : 'Buy Ships' },
+    { id: 'upgrade', label: isPortrait ? 'Upg' : 'Upgrade Ships' },
+    { id: 'slots', label: isPortrait ? 'Slot' : 'Buy Slots' },
+    { id: 'sell', label: isPortrait ? 'Sell' : 'Sell Ships' },
+    { id: 'missiles', label: isPortrait ? 'Misl' : 'Missile Defense' },
+    { id: 'market', label: isPortrait ? 'Mkt' : 'Black Market' },
   ];
 
-  const tabW = isMobile ? 145 : 140;
-  const tabH = isMobile ? 40 : 32;
-  const tabY = 85;
-  const tabStartX = W / 2 - (tabs.length * tabW) / 2;
-
-  for (let i = 0; i < tabs.length; i++) {
-    const tx = tabStartX + i * tabW;
-    const active = game.shopTab === tabs[i].id;
-    ctx.fillStyle = active ? '#1a4a7a' : '#0d1f3c';
-    ctx.fillRect(tx, tabY, tabW - 4, tabH);
-    ctx.strokeStyle = active ? '#44aaff' : '#1a3a5c';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(tx, tabY, tabW - 4, tabH);
-    ctx.fillStyle = active ? '#ffffff' : '#888888';
-    ctx.font = isMobile ? 'bold 14px Segoe UI' : '12px Segoe UI';
-    ctx.textAlign = 'center';
-    ctx.fillText(tabs[i].label, tx + (tabW - 4) / 2, tabY + (isMobile ? 26 : 21));
+  if (isPortrait) {
+    // Portrait: 2 rows of 3 tabs within visible area
+    const tabW = Math.floor((visW - 10) / 3);
+    const tabH = 34;
+    for (let i = 0; i < 6; i++) {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      const tx = vL + 3 + col * (tabW + 2);
+      const ty = 68 + row * (tabH + 3);
+      const active = game.shopTab === tabLabels[i].id;
+      ctx.fillStyle = active ? '#1a4a7a' : '#0d1f3c';
+      ctx.fillRect(tx, ty, tabW, tabH);
+      ctx.strokeStyle = active ? '#44aaff' : '#1a3a5c';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(tx, ty, tabW, tabH);
+      ctx.fillStyle = active ? '#ffffff' : '#888888';
+      ctx.font = 'bold 14px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText(tabLabels[i].label, tx + tabW / 2, ty + 23);
+    }
+  } else {
+    // Landscape: 1 row of 6 tabs
+    const tabW = 140;
+    const tabH = 32;
+    const tabY = 85;
+    const tabStartX = W / 2 - (6 * tabW) / 2;
+    for (let i = 0; i < 6; i++) {
+      const tx = tabStartX + i * tabW;
+      const active = game.shopTab === tabLabels[i].id;
+      ctx.fillStyle = active ? '#1a4a7a' : '#0d1f3c';
+      ctx.fillRect(tx, tabY, tabW - 4, tabH);
+      ctx.strokeStyle = active ? '#44aaff' : '#1a3a5c';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(tx, tabY, tabW - 4, tabH);
+      ctx.fillStyle = active ? '#ffffff' : '#888888';
+      ctx.font = 'bold 12px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText(tabLabels[i].label, tx + (tabW - 4) / 2, tabY + 21);
+    }
   }
 
-  const contentY = isMobile ? 140 : 130;
+  const contentY = isPortrait ? 145 : 130;
 
   if (game.shopTab === 'buy') {
     drawShopBuy(contentY);
@@ -2134,20 +2143,20 @@ function drawShop() {
   }
 
   // ===== Bottom section =====
-  const bottomY = H - 195;
+  const bottomY = isPortrait ? H - 175 : H - 195;
 
   // Fleet display
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = isMobile ? '14px Segoe UI' : '11px Segoe UI';
+  ctx.font = '11px Segoe UI';
   ctx.textAlign = 'center';
   const fleetText = game.escortShips.length === 0
-    ? 'Your Fleet: EMPTY (free Patrol Boat on farm/battle)'
-    : 'Your Fleet: ' + game.escortShips.length + '/' + game.maxSlots + ' slots';
-  ctx.fillText(fleetText, W / 2, bottomY);
+    ? 'Fleet: EMPTY (free Patrol Boat on farm/battle)'
+    : 'Fleet: ' + game.escortShips.length + '/' + game.maxSlots + ' slots';
+  ctx.fillText(fleetText, cx, bottomY);
 
   for (let i = 0; i < game.escortShips.length; i++) {
     const s = game.escortShips[i];
-    const sx = W / 2 - (game.escortShips.length * 50) / 2 + i * 50 + 25;
+    const sx = cx - (game.escortShips.length * 50) / 2 + i * 50 + 25;
     const sy = bottomY + 18;
     ctx.fillStyle = s.color;
     ctx.beginPath();
@@ -2158,91 +2167,146 @@ function drawShop() {
     ctx.fillText(s.name.split(' ')[0], sx, sy + 18);
   }
 
-  // Determine next wave: if failed current wave, next is same wave (retry)
+  // Determine next wave
   const nextWave = game.waveFailed ? game.wave : game.wave + 1;
 
-  // NEXT WAVE / RETRY button (right)
-  const nextBtnX = W / 2 + 10;
-  const nextBtnY = H - 55;
-  const nextBtnW = 200;
-  const nextBtnH = 42;
-  ctx.fillStyle = game.waveFailed ? '#6a3a1a' : '#1a6a2a';
-  ctx.fillRect(nextBtnX, nextBtnY, nextBtnW, nextBtnH);
-  ctx.strokeStyle = game.waveFailed ? '#ff8844' : '#44ff66';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(nextBtnX, nextBtnY, nextBtnW, nextBtnH);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = isMobile ? 'bold 18px Segoe UI' : 'bold 15px Segoe UI';
-  ctx.textAlign = 'center';
-  if (game.waveFailed) {
-    ctx.fillText('RETRY WAVE ' + nextWave, nextBtnX + nextBtnW / 2, nextBtnY + 18);
-    ctx.fillStyle = '#ffaa88';
-    ctx.font = isMobile ? '12px Segoe UI' : '10px Segoe UI';
-    ctx.fillText('Full rewards', nextBtnX + nextBtnW / 2, nextBtnY + 33);
+  if (isPortrait) {
+    // Portrait: stack vertically - NEXT WAVE on top, FARM below
+    const nextBtnW = visW - 10;
+    const nextBtnH = 34;
+    const nextBtnX = vL + 5;
+    const nextBtnY = H - 120;
+    ctx.fillStyle = game.waveFailed ? '#6a3a1a' : '#1a6a2a';
+    ctx.fillRect(nextBtnX, nextBtnY, nextBtnW, nextBtnH);
+    ctx.strokeStyle = game.waveFailed ? '#ff8844' : '#44ff66';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(nextBtnX, nextBtnY, nextBtnW, nextBtnH);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(game.waveFailed ? 'RETRY W' + nextWave : 'WAVE ' + nextWave + ' >>', nextBtnX + nextBtnW / 2, nextBtnY + 22);
+
+    // Farm below Next Wave
+    const farmX = vL + 5;
+    const farmY = H - 55;
+    const farmH = 30;
+    if (game.highestCompletedWave > 0) {
+      ctx.fillStyle = '#aabbcc';
+      ctx.font = 'bold 10px Segoe UI';
+      ctx.textAlign = 'left';
+      ctx.fillText('FARM (50%):', farmX, farmY - 3);
+      const maxShow = Math.min(game.highestCompletedWave, 5);
+      const wBtnW = Math.min(40, Math.floor((visW - 70) / maxShow));
+      for (let i = 0; i < maxShow; i++) {
+        const waveNum = game.highestCompletedWave - maxShow + 1 + i;
+        if (waveNum < 1) continue;
+        const bx = farmX + i * (wBtnW + 3);
+        const by = farmY;
+        const selected = game.selectedFarmWave === waveNum;
+        ctx.fillStyle = selected ? '#1a4a7a' : '#0d2a4a';
+        ctx.fillRect(bx, by, wBtnW, farmH);
+        ctx.strokeStyle = selected ? '#44aaff' : '#1a4a6a';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx, by, wBtnW, farmH);
+        ctx.fillStyle = selected ? '#ffffff' : '#88aacc';
+        ctx.font = 'bold 11px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText('W' + waveNum, bx + wBtnW / 2, by + 22);
+      }
+      if (game.selectedFarmWave > 0) {
+        const goX = farmX + maxShow * (wBtnW + 3) + 3;
+        const goW = 45;
+        ctx.fillStyle = '#1a5a3a';
+        ctx.fillRect(goX, farmY, goW, farmH);
+        ctx.strokeStyle = '#44dd88';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(goX, farmY, goW, farmH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText('GO!', goX + goW / 2, farmY + 22);
+      }
+    }
   } else {
-    ctx.fillText('WAVE ' + nextWave + ' >>', nextBtnX + nextBtnW / 2, nextBtnY + 27);
-  }
-
-  // FARM GOLD section (left) - wave selector
-  const farmX = 10;
-  const farmY = H - 55;
-  const farmH = 42;
-
-  ctx.fillStyle = '#aabbcc';
-  ctx.font = isMobile ? 'bold 14px Segoe UI' : 'bold 11px Segoe UI';
-  ctx.textAlign = 'left';
-  ctx.fillText('FARM GOLD (50% rewards):', farmX, farmY - 5);
-
-  if (game.highestCompletedWave === 0) {
-    ctx.fillStyle = '#666';
-    ctx.font = '10px Segoe UI';
-    ctx.fillText('Complete wave 1 first to unlock farming', farmX, farmY + 18);
-  } else {
-    // Draw wave buttons for farming
-    const maxShow = Math.min(game.highestCompletedWave, 8);
-    const wBtnW = Math.min(48, Math.floor((W / 2 - 30) / maxShow));
-    for (let i = 0; i < maxShow; i++) {
-      const waveNum = game.highestCompletedWave - maxShow + 1 + i;
-      if (waveNum < 1) continue;
-      const bx = farmX + i * (wBtnW + 4);
-      const by = farmY;
-      const selected = game.selectedFarmWave === waveNum;
-
-      ctx.fillStyle = selected ? '#1a4a7a' : '#0d2a4a';
-      ctx.fillRect(bx, by, wBtnW, farmH);
-      ctx.strokeStyle = selected ? '#44aaff' : '#1a4a6a';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(bx, by, wBtnW, farmH);
-      ctx.fillStyle = selected ? '#ffffff' : '#88aacc';
-      ctx.font = 'bold 13px Segoe UI';
-      ctx.textAlign = 'center';
-      ctx.fillText('W' + waveNum, bx + wBtnW / 2, by + 17);
-      // Difficulty hint
-      ctx.fillStyle = '#668899';
-      ctx.font = '8px Segoe UI';
-      const diff = waveNum <= 3 ? 'Easy' : waveNum <= 7 ? 'Med' : waveNum <= 12 ? 'Hard' : 'Hell';
-      ctx.fillText(diff, bx + wBtnW / 2, by + 30);
+    // Landscape: original layout
+    // NEXT WAVE / RETRY button (right)
+    const nextBtnX = W / 2 + 10;
+    const nextBtnY = H - 55;
+    const nextBtnW = 200;
+    const nextBtnH = 42;
+    ctx.fillStyle = game.waveFailed ? '#6a3a1a' : '#1a6a2a';
+    ctx.fillRect(nextBtnX, nextBtnY, nextBtnW, nextBtnH);
+    ctx.strokeStyle = game.waveFailed ? '#ff8844' : '#44ff66';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(nextBtnX, nextBtnY, nextBtnW, nextBtnH);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px Segoe UI';
+    ctx.textAlign = 'center';
+    if (game.waveFailed) {
+      ctx.fillText('RETRY WAVE ' + nextWave, nextBtnX + nextBtnW / 2, nextBtnY + 18);
+      ctx.fillStyle = '#ffaa88';
+      ctx.font = '10px Segoe UI';
+      ctx.fillText('Full rewards', nextBtnX + nextBtnW / 2, nextBtnY + 33);
+    } else {
+      ctx.fillText('WAVE ' + nextWave + ' >>', nextBtnX + nextBtnW / 2, nextBtnY + 27);
     }
 
-    // GO FARM button (after wave buttons)
-    if (game.selectedFarmWave > 0) {
-      const goX = farmX + maxShow * (wBtnW + 4) + 4;
-      const goW = 60;
-      ctx.fillStyle = '#1a5a3a';
-      ctx.fillRect(goX, farmY, goW, farmH);
-      ctx.strokeStyle = '#44dd88';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(goX, farmY, goW, farmH);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px Segoe UI';
-      ctx.textAlign = 'center';
-      ctx.fillText('GO!', goX + goW / 2, farmY + 27);
+    // FARM GOLD section (left)
+    const farmX = 10;
+    const farmY = H - 55;
+    const farmH = 42;
+    ctx.fillStyle = '#aabbcc';
+    ctx.font = 'bold 11px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText('FARM GOLD (50% rewards):', farmX, farmY - 5);
+
+    if (game.highestCompletedWave === 0) {
+      ctx.fillStyle = '#666';
+      ctx.font = '10px Segoe UI';
+      ctx.fillText('Complete wave 1 first to unlock farming', farmX, farmY + 18);
+    } else {
+      const maxShow = Math.min(game.highestCompletedWave, 8);
+      const wBtnW = Math.min(48, Math.floor((W / 2 - 30) / maxShow));
+      for (let i = 0; i < maxShow; i++) {
+        const waveNum = game.highestCompletedWave - maxShow + 1 + i;
+        if (waveNum < 1) continue;
+        const bx = farmX + i * (wBtnW + 4);
+        const by = farmY;
+        const selected = game.selectedFarmWave === waveNum;
+        ctx.fillStyle = selected ? '#1a4a7a' : '#0d2a4a';
+        ctx.fillRect(bx, by, wBtnW, farmH);
+        ctx.strokeStyle = selected ? '#44aaff' : '#1a4a6a';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx, by, wBtnW, farmH);
+        ctx.fillStyle = selected ? '#ffffff' : '#88aacc';
+        ctx.font = 'bold 13px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText('W' + waveNum, bx + wBtnW / 2, by + 17);
+        ctx.fillStyle = '#668899';
+        ctx.font = '8px Segoe UI';
+        const diff = waveNum <= 3 ? 'Easy' : waveNum <= 7 ? 'Med' : waveNum <= 12 ? 'Hard' : 'Hell';
+        ctx.fillText(diff, bx + wBtnW / 2, by + 30);
+      }
+      if (game.selectedFarmWave > 0) {
+        const goX = farmX + maxShow * (wBtnW + 4) + 4;
+        const goW = 60;
+        ctx.fillStyle = '#1a5a3a';
+        ctx.fillRect(goX, farmY, goW, farmH);
+        ctx.strokeStyle = '#44dd88';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(goX, farmY, goW, farmH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText('GO!', goX + goW / 2, farmY + 27);
+      }
     }
   }
 }
 
 function drawShopBuy(startY) {
   const types = Object.keys(SHIP_TYPES);
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
   ctx.fillStyle = '#cccccc';
   ctx.font = 'bold 16px Segoe UI';
   ctx.textAlign = 'center';
@@ -2254,10 +2318,21 @@ function drawShopBuy(startY) {
   for (let i = 0; i < types.length; i++) {
     const type = types[i];
     const def = SHIP_TYPES[type];
-    const cardX = 80 + i * 190;
-    const cardY = startY + 50;
-    const cardW = 170;
-    const cardH = 260;
+
+    let cardX, cardY, cardW, cardH;
+    if (isPortrait) {
+      cardW = Math.floor((visW - 15) / 2);
+      cardH = 155;
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      cardX = vL + 5 + col * (cardW + 5);
+      cardY = startY + 50 + row * (cardH + 5);
+    } else {
+      cardX = 80 + i * 190;
+      cardY = startY + 50;
+      cardW = 170;
+      cardH = 260;
+    }
 
     const canBuy = game.gold >= def.cost && game.escortShips.length < game.maxSlots;
 
@@ -2270,48 +2345,58 @@ function drawShopBuy(startY) {
     // Ship icon
     ctx.fillStyle = def.color;
     ctx.beginPath();
-    ctx.arc(cardX + cardW / 2, cardY + 40, def.size, 0, Math.PI * 2);
+    ctx.arc(cardX + cardW / 2, cardY + 25, def.size, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px Segoe UI';
+    ctx.font = isPortrait ? 'bold 12px Segoe UI' : 'bold 14px Segoe UI';
     ctx.textAlign = 'center';
-    ctx.fillText(def.name, cardX + cardW / 2, cardY + 70);
+    ctx.fillText(def.name, cardX + cardW / 2, cardY + (isPortrait ? 50 : 70));
 
-    ctx.font = '11px Segoe UI';
+    ctx.font = isPortrait ? '10px Segoe UI' : '11px Segoe UI';
     ctx.fillStyle = '#aaaaaa';
-    const stats = [
-      'HP: ' + def.hp,
-      'Damage: ' + def.damage,
-      'Fire Rate: ' + def.fireRate.toFixed(2) + 's',
-      'Range: ' + def.range,
-      'Speed: ' + def.speed,
-      'Tier: ' + def.tier,
-    ];
-    for (let j = 0; j < stats.length; j++) {
-      ctx.fillText(stats[j], cardX + cardW / 2, cardY + 95 + j * 18);
+    if (isPortrait) {
+      const stats = ['HP:' + def.hp + ' DMG:' + def.damage, 'Rate:' + def.fireRate.toFixed(2) + ' Rng:' + def.range];
+      for (let j = 0; j < stats.length; j++) {
+        ctx.fillText(stats[j], cardX + cardW / 2, cardY + 68 + j * 15);
+      }
+    } else {
+      const stats = [
+        'HP: ' + def.hp,
+        'Damage: ' + def.damage,
+        'Fire Rate: ' + def.fireRate.toFixed(2) + 's',
+        'Range: ' + def.range,
+        'Speed: ' + def.speed,
+        'Tier: ' + def.tier,
+      ];
+      for (let j = 0; j < stats.length; j++) {
+        ctx.fillText(stats[j], cardX + cardW / 2, cardY + 95 + j * 18);
+      }
     }
 
     // Cost
     ctx.fillStyle = canBuy ? '#ffd700' : '#886600';
-    ctx.font = 'bold 16px Segoe UI';
-    ctx.fillText(def.cost + 'g', cardX + cardW / 2, cardY + 220);
+    ctx.font = isPortrait ? 'bold 13px Segoe UI' : 'bold 16px Segoe UI';
+    ctx.fillText(def.cost + 'g', cardX + cardW / 2, cardY + (isPortrait ? 110 : 220));
 
     // Buy button
     if (canBuy) {
+      const btnY = isPortrait ? cardY + 118 : cardY + 232;
+      const btnH = 22;
       ctx.fillStyle = '#1a5a2a';
-      ctx.fillRect(cardX + 20, cardY + 232, cardW - 40, 22);
+      ctx.fillRect(cardX + 10, btnY, cardW - 20, btnH);
       ctx.strokeStyle = '#44ff66';
       ctx.lineWidth = 1;
-      ctx.strokeRect(cardX + 20, cardY + 232, cardW - 40, 22);
+      ctx.strokeRect(cardX + 10, btnY, cardW - 20, btnH);
       ctx.fillStyle = '#ffffff';
       ctx.font = '11px Segoe UI';
-      ctx.fillText('BUY', cardX + cardW / 2, cardY + 247);
+      ctx.fillText('BUY', cardX + cardW / 2, btnY + 15);
     }
   }
 }
 
 function drawShopUpgrade(startY) {
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
   ctx.fillStyle = '#cccccc';
   ctx.font = 'bold 16px Segoe UI';
   ctx.textAlign = 'center';
@@ -2325,24 +2410,26 @@ function drawShopUpgrade(startY) {
   }
 
   // Ship selector
+  const shipBtnW = isPortrait ? 55 : 72;
+  const shipBtnH = isPortrait ? 40 : 50;
   for (let i = 0; i < game.escortShips.length; i++) {
     const s = game.escortShips[i];
-    const bx = W / 2 - (game.escortShips.length * 80) / 2 + i * 80;
+    const bx = W / 2 - (game.escortShips.length * (shipBtnW + 8)) / 2 + i * (shipBtnW + 8);
     const by = startY + 30;
     const selected = game.shopSelectedShip === i;
     ctx.fillStyle = selected ? '#1a4a7a' : '#0d1f3c';
-    ctx.fillRect(bx, by, 72, 50);
+    ctx.fillRect(bx, by, shipBtnW, shipBtnH);
     ctx.strokeStyle = selected ? '#44aaff' : '#1a3a5c';
     ctx.lineWidth = 1;
-    ctx.strokeRect(bx, by, 72, 50);
+    ctx.strokeRect(bx, by, shipBtnW, shipBtnH);
     ctx.fillStyle = s.color;
     ctx.beginPath();
-    ctx.arc(bx + 36, by + 20, 8, 0, Math.PI * 2);
+    ctx.arc(bx + shipBtnW / 2, by + 16, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#ffffff';
     ctx.font = '9px Segoe UI';
     ctx.textAlign = 'center';
-    ctx.fillText(s.name.split(' ')[0], bx + 36, by + 44);
+    ctx.fillText(s.name.split(' ')[0], bx + shipBtnW / 2, by + shipBtnH - 4);
   }
 
   if (game.shopSelectedShip < 0 || game.shopSelectedShip >= game.escortShips.length) {
@@ -2355,7 +2442,7 @@ function drawShopUpgrade(startY) {
 
   const ship = game.escortShips[game.shopSelectedShip];
   const upgradeTypes = Object.keys(UPGRADE_DEFS);
-  const uy = startY + 100;
+  const uy = startY + (isPortrait ? 85 : 100);
 
   for (let i = 0; i < upgradeTypes.length; i++) {
     const ut = upgradeTypes[i];
@@ -2365,10 +2452,20 @@ function drawShopUpgrade(startY) {
     const cost = maxed ? 0 : ship.getUpgradeCost(ut);
     const canUpgrade = !maxed && game.gold >= cost;
 
-    const bx = 120 + i * 175;
-    const by = uy;
-    const bw = 160;
-    const bh = 180;
+    let bx, by, bw, bh;
+    if (isPortrait) {
+      bw = Math.floor((visW - 15) / 2);
+      bh = 120;
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      bx = vL + 5 + col * (bw + 5);
+      by = uy + row * (bh + 5);
+    } else {
+      bx = 120 + i * 175;
+      by = uy;
+      bw = 160;
+      bh = 180;
+    }
 
     ctx.fillStyle = canUpgrade ? '#0d2a1a' : '#1a1a2a';
     ctx.fillRect(bx, by, bw, bh);
@@ -2377,106 +2474,119 @@ function drawShopUpgrade(startY) {
     ctx.strokeRect(bx, by, bw, bh);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px Segoe UI';
+    ctx.font = isPortrait ? 'bold 11px Segoe UI' : 'bold 13px Segoe UI';
     ctx.textAlign = 'center';
-    ctx.fillText(def.name, bx + bw / 2, by + 25);
+    ctx.fillText(def.name, bx + bw / 2, by + 20);
 
-    ctx.fillStyle = '#aaaaaa';
-    ctx.font = '11px Segoe UI';
-    ctx.fillText(def.desc, bx + bw / 2, by + 45);
+    if (!isPortrait) {
+      ctx.fillStyle = '#aaaaaa';
+      ctx.font = '11px Segoe UI';
+      ctx.fillText(def.desc, bx + bw / 2, by + 45);
+    }
 
     // Level bar
+    const barY = isPortrait ? by + 30 : by + 60;
     ctx.fillStyle = '#333';
-    ctx.fillRect(bx + 20, by + 60, bw - 40, 12);
+    ctx.fillRect(bx + 10, barY, bw - 20, 10);
     for (let j = 0; j < def.maxLevel; j++) {
-      const segX = bx + 20 + j * ((bw - 40) / def.maxLevel);
-      const segW = (bw - 40) / def.maxLevel - 2;
+      const segX = bx + 10 + j * ((bw - 20) / def.maxLevel);
+      const segW = (bw - 20) / def.maxLevel - 2;
       ctx.fillStyle = j < level ? '#44ff66' : '#1a1a2a';
-      ctx.fillRect(segX, by + 60, segW, 12);
+      ctx.fillRect(segX, barY, segW, 10);
     }
     ctx.fillStyle = '#ffffff';
     ctx.font = '10px Segoe UI';
-    ctx.fillText('Level ' + level + '/' + def.maxLevel, bx + bw / 2, by + 90);
+    ctx.fillText('Lv ' + level + '/' + def.maxLevel, bx + bw / 2, barY + (isPortrait ? 22 : 28));
 
     // Current stat
     let statText = '';
     if (ut === 'hull') statText = 'HP: ' + ship.getMaxHp();
     else if (ut === 'damage') statText = 'DMG: ' + ship.getDamage().toFixed(1);
     else if (ut === 'fireRate') statText = 'Rate: ' + ship.getFireRate().toFixed(2) + 's';
-    else if (ut === 'range') statText = 'Range: ' + ship.getRange().toFixed(0);
+    else if (ut === 'range') statText = 'Rng: ' + ship.getRange().toFixed(0);
     ctx.fillStyle = '#88ddff';
-    ctx.fillText(statText, bx + bw / 2, by + 110);
+    ctx.fillText(statText, bx + bw / 2, barY + (isPortrait ? 36 : 48));
 
     if (!maxed) {
       ctx.fillStyle = canUpgrade ? '#ffd700' : '#886600';
-      ctx.font = 'bold 14px Segoe UI';
-      ctx.fillText(cost + 'g', bx + bw / 2, by + 135);
+      ctx.font = isPortrait ? 'bold 12px Segoe UI' : 'bold 14px Segoe UI';
+      ctx.fillText(cost + 'g', bx + bw / 2, barY + (isPortrait ? 52 : 73));
 
       if (canUpgrade) {
+        const ubtnY = isPortrait ? barY + 58 : by + 148;
         ctx.fillStyle = '#1a5a2a';
-        ctx.fillRect(bx + 20, by + 148, bw - 40, 22);
+        ctx.fillRect(bx + 10, ubtnY, bw - 20, 20);
         ctx.strokeStyle = '#44ff66';
         ctx.lineWidth = 1;
-        ctx.strokeRect(bx + 20, by + 148, bw - 40, 22);
+        ctx.strokeRect(bx + 10, ubtnY, bw - 20, 20);
         ctx.fillStyle = '#ffffff';
         ctx.font = '11px Segoe UI';
-        ctx.fillText('UPGRADE', bx + bw / 2, by + 163);
+        ctx.fillText('UPGRADE', bx + bw / 2, ubtnY + 14);
       }
     } else {
       ctx.fillStyle = '#44ff66';
-      ctx.font = 'bold 14px Segoe UI';
-      ctx.fillText('MAXED', bx + bw / 2, by + 140);
+      ctx.font = isPortrait ? 'bold 12px Segoe UI' : 'bold 14px Segoe UI';
+      ctx.fillText('MAXED', bx + bw / 2, barY + (isPortrait ? 55 : 78));
     }
   }
 
   // Ammo type selector
-  const ammoY = uy + 200;
+  const ammoY = isPortrait ? uy + 255 : uy + 200;
   ctx.fillStyle = '#cccccc';
   ctx.font = 'bold 13px Segoe UI';
   ctx.textAlign = 'center';
-  ctx.fillText('Ammo Type: ' + AMMO_TYPES[ship.ammo].name, W / 2, ammoY);
+  ctx.fillText('Ammo: ' + AMMO_TYPES[ship.ammo].name, W / 2, ammoY);
   const ammoKeys = Object.keys(AMMO_TYPES);
   for (let i = 0; i < ammoKeys.length; i++) {
     const at = AMMO_TYPES[ammoKeys[i]];
-    const abx = 120 + i * 230;
-    const aby = ammoY + 10;
+    let abx, aby, abw;
+    if (isPortrait) {
+      abw = visW - 10;
+      abx = vL + 5;
+      aby = ammoY + 10 + i * 40;
+    } else {
+      abw = 210;
+      abx = 120 + i * 230;
+      aby = ammoY + 10;
+    }
     const active = ship.ammo === ammoKeys[i];
     const owned = ammoKeys[i] === 'standard' || ship['has_' + ammoKeys[i]];
     const canBuy = !owned && game.gold >= at.cost;
 
     ctx.fillStyle = active ? '#0d3a2a' : '#1a1a2a';
-    ctx.fillRect(abx, aby, 210, 45);
+    ctx.fillRect(abx, aby, abw, isPortrait ? 32 : 45);
     ctx.strokeStyle = active ? '#44ff66' : '#333355';
     ctx.lineWidth = 1;
-    ctx.strokeRect(abx, aby, 210, 45);
+    ctx.strokeRect(abx, aby, abw, isPortrait ? 32 : 45);
     ctx.fillStyle = at.color;
     ctx.font = 'bold 12px Segoe UI';
     ctx.textAlign = 'left';
-    ctx.fillText(at.name, abx + 10, aby + 18);
+    ctx.fillText(at.name, abx + 10, aby + (isPortrait ? 14 : 18));
     ctx.fillStyle = '#aaa';
     ctx.font = '10px Segoe UI';
-    ctx.fillText(at.desc, abx + 10, aby + 34);
+    ctx.fillText(at.desc, abx + 10, aby + (isPortrait ? 26 : 34));
 
     if (!owned && at.cost > 0) {
       ctx.fillStyle = canBuy ? '#ffd700' : '#886600';
       ctx.font = 'bold 11px Segoe UI';
       ctx.textAlign = 'right';
-      ctx.fillText(at.cost + 'g', abx + 200, aby + 26);
+      ctx.fillText(at.cost + 'g', abx + abw - 10, aby + (isPortrait ? 20 : 26));
     } else if (owned && !active) {
       ctx.fillStyle = '#44aa66';
       ctx.font = '10px Segoe UI';
       ctx.textAlign = 'right';
-      ctx.fillText('EQUIP', abx + 200, aby + 26);
+      ctx.fillText('EQUIP', abx + abw - 10, aby + (isPortrait ? 20 : 26));
     } else if (active) {
       ctx.fillStyle = '#44ff66';
       ctx.font = '10px Segoe UI';
       ctx.textAlign = 'right';
-      ctx.fillText('ACTIVE', abx + 200, aby + 26);
+      ctx.fillText('ACTIVE', abx + abw - 10, aby + (isPortrait ? 20 : 26));
     }
   }
 }
 
 function drawShopSlots(startY) {
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
   ctx.fillStyle = '#cccccc';
   ctx.font = 'bold 16px Segoe UI';
   ctx.textAlign = 'center';
@@ -2487,9 +2597,9 @@ function drawShopSlots(startY) {
 
   for (let i = 0; i < SLOT_UPGRADES.length; i++) {
     const su = SLOT_UPGRADES[i];
-    const bx = W / 2 - 200;
+    const bx = isPortrait ? vL + 5 : W / 2 - 200;
     const by = startY + 60 + i * 55;
-    const bw = 400;
+    const bw = isPortrait ? visW - 10 : 400;
     const bh = 45;
 
     const owned = game.maxSlots >= su.slot;
@@ -2536,6 +2646,7 @@ function drawShopSlots(startY) {
 }
 
 function drawShopSell(startY) {
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
   ctx.fillStyle = '#cccccc';
   ctx.font = 'bold 16px Segoe UI';
   ctx.textAlign = 'center';
@@ -2550,9 +2661,9 @@ function drawShopSell(startY) {
 
   for (let i = 0; i < game.escortShips.length; i++) {
     const s = game.escortShips[i];
-    const bx = W / 2 - 200;
+    const bx = isPortrait ? vL + 5 : W / 2 - 200;
     const by = startY + 40 + i * 60;
-    const bw = 400;
+    const bw = isPortrait ? visW - 10 : 400;
     const bh = 50;
 
     ctx.fillStyle = '#1a1a2a';
@@ -2595,6 +2706,7 @@ function drawShopSell(startY) {
 }
 
 function drawShopMissiles(startY) {
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
   ctx.fillStyle = '#cccccc';
   ctx.font = 'bold 16px Segoe UI';
   ctx.textAlign = 'center';
@@ -2613,9 +2725,9 @@ function drawShopMissiles(startY) {
 
   for (let i = 0; i < costs.length; i++) {
     const c = costs[i];
-    const bx = W / 2 - 150;
+    const bx = isPortrait ? vL + 5 : W / 2 - 150;
     const by = startY + 80 + i * 55;
-    const bw = 300;
+    const bw = isPortrait ? visW - 10 : 300;
     const bh = 45;
 
     const canBuy = game.gold >= c.cost && game.interceptorMissiles + c.amount <= 10;
@@ -2658,6 +2770,7 @@ function drawShopMissiles(startY) {
 }
 
 function drawShopMarket(startY) {
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
   ctx.fillStyle = '#cccccc';
   ctx.font = 'bold 16px Segoe UI';
   ctx.textAlign = 'center';
@@ -2675,9 +2788,9 @@ function drawShopMarket(startY) {
 
   for (let i = 0; i < game.blackMarketOffers.length; i++) {
     const o = game.blackMarketOffers[i];
-    const bx = W / 2 - 200;
+    const bx = isPortrait ? vL + 5 : W / 2 - 200;
     const by = startY + 50 + i * 65;
-    const bw = 400;
+    const bw = isPortrait ? visW - 10 : 400;
     const bh = 55;
     const canBuy = game.gold >= o.cost;
 
@@ -2718,69 +2831,137 @@ function drawShopMarket(startY) {
 function handleShopClick(mx, my) {
   // Tab clicks
   const tabs = ['buy', 'upgrade', 'slots', 'sell', 'missiles', 'market'];
-  const tabW = isMobile ? 145 : 140;
-  const tabH = isMobile ? 40 : 32;
-  const tabY = 85;
-  const tabStartX = W / 2 - (tabs.length * tabW) / 2;
-  for (let i = 0; i < tabs.length; i++) {
-    const tx = tabStartX + i * tabW;
-    if (mx >= tx && mx <= tx + tabW - 4 && my >= tabY && my <= tabY + tabH) {
-      game.shopTab = tabs[i];
-      game.shopSelectedShip = -1;
+  if (isPortrait) {
+    // Portrait: 2 rows of 3 tabs
+    const vL = Math.floor((W - visW) / 2);
+    const tabW = Math.floor((visW - 10) / 3);
+    const tabH = 34;
+    for (let i = 0; i < 6; i++) {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      const tx = vL + 3 + col * (tabW + 2);
+      const ty = 68 + row * (tabH + 3);
+      if (mx >= tx && mx <= tx + tabW && my >= ty && my <= ty + tabH) {
+        game.shopTab = tabs[i];
+        game.shopSelectedShip = -1;
+        return;
+      }
+    }
+  } else {
+    const tabW = 140;
+    const tabH = 32;
+    const tabY = 85;
+    const tabStartX = W / 2 - (6 * tabW) / 2;
+    for (let i = 0; i < 6; i++) {
+      const tx = tabStartX + i * tabW;
+      if (mx >= tx && mx <= tx + tabW - 4 && my >= tabY && my <= tabY + tabH) {
+        game.shopTab = tabs[i];
+        game.shopSelectedShip = -1;
+        return;
+      }
+    }
+  }
+
+  // NEXT WAVE / RETRY button
+  if (isPortrait) {
+    const vL = Math.floor((W - visW) / 2);
+    const nextBtnW = visW - 10;
+    const nextBtnH = 34;
+    const nextBtnX = vL + 5;
+    const nextBtnY = H - 120;
+    if (mx >= nextBtnX && mx <= nextBtnX + nextBtnW && my >= nextBtnY && my <= nextBtnY + nextBtnH) {
+      const nextWave = game.waveFailed ? game.wave : game.wave + 1;
+      game.retryAvailable = false;
+      game.replayGoldMulti = 1.0;
+      game.isReplay = false;
+      game.selectedFarmWave = 0;
+      ensurePlayerHasShip();
+      setupWave(nextWave);
+      game.state = 'PLAYING';
+      return;
+    }
+  } else {
+    const nextBtnX = W / 2 + 10;
+    const nextBtnY = H - 55;
+    const nextBtnW = 200;
+    const nextBtnH = 42;
+    if (mx >= nextBtnX && mx <= nextBtnX + nextBtnW && my >= nextBtnY && my <= nextBtnY + nextBtnH) {
+      const nextWave = game.waveFailed ? game.wave : game.wave + 1;
+      game.retryAvailable = false;
+      game.replayGoldMulti = 1.0;
+      game.isReplay = false;
+      game.selectedFarmWave = 0;
+      ensurePlayerHasShip();
+      setupWave(nextWave);
+      game.state = 'PLAYING';
       return;
     }
   }
 
-  // NEXT WAVE / RETRY button (right side)
-  const nextBtnX = W / 2 + 10;
-  const nextBtnY = H - 55;
-  const nextBtnW = 200;
-  const nextBtnH = 42;
-  if (mx >= nextBtnX && mx <= nextBtnX + nextBtnW && my >= nextBtnY && my <= nextBtnY + nextBtnH) {
-    const nextWave = game.waveFailed ? game.wave : game.wave + 1;
-    game.retryAvailable = false;
-    game.replayGoldMulti = 1.0;
-    game.isReplay = false;
-    game.selectedFarmWave = 0;
-    ensurePlayerHasShip();
-    setupWave(nextWave);
-    game.state = 'PLAYING';
-    return;
-  }
-
-  // FARM wave selector buttons (left side)
+  // FARM wave selector buttons
   if (game.highestCompletedWave > 0) {
-    const farmX = 10;
-    const farmY = H - 55;
-    const farmH = 42;
-    const maxShow = Math.min(game.highestCompletedWave, 8);
-    const wBtnW = Math.min(48, Math.floor((W / 2 - 30) / maxShow));
-
-    for (let i = 0; i < maxShow; i++) {
-      const waveNum = game.highestCompletedWave - maxShow + 1 + i;
-      if (waveNum < 1) continue;
-      const bx = farmX + i * (wBtnW + 4);
-      if (mx >= bx && mx <= bx + wBtnW && my >= farmY && my <= farmY + farmH) {
-        game.selectedFarmWave = waveNum;
-        return;
+    if (isPortrait) {
+      const farmVL = Math.floor((W - visW) / 2);
+      const farmX = farmVL + 5;
+      const farmY = H - 55;
+      const farmH = 30;
+      const maxShow = Math.min(game.highestCompletedWave, 5);
+      const wBtnW = Math.min(40, Math.floor((visW - 70) / maxShow));
+      for (let i = 0; i < maxShow; i++) {
+        const waveNum = game.highestCompletedWave - maxShow + 1 + i;
+        if (waveNum < 1) continue;
+        const bx = farmX + i * (wBtnW + 3);
+        if (mx >= bx && mx <= bx + wBtnW && my >= farmY && my <= farmY + farmH) {
+          game.selectedFarmWave = waveNum;
+          return;
+        }
       }
-    }
-
-    // GO FARM button
-    if (game.selectedFarmWave > 0) {
-      const goX = farmX + maxShow * (wBtnW + 4) + 4;
-      const goW = 60;
-      if (mx >= goX && mx <= goX + goW && my >= farmY && my <= farmY + farmH) {
-        const savedWave = game.wave;
-        game.retryAvailable = false;
-        game.isReplay = true;
-        game.replayGoldMulti = 0.5;
-        game.replayWasFailed = game.waveFailed;
-        ensurePlayerHasShip();
-        setupWave(game.selectedFarmWave);
-        game.replayReturnWave = savedWave;
-        game.state = 'PLAYING';
-        return;
+      if (game.selectedFarmWave > 0) {
+        const goX = farmX + maxShow * (wBtnW + 3) + 3;
+        const goW = 45;
+        if (mx >= goX && mx <= goX + goW && my >= farmY && my <= farmY + farmH) {
+          const savedWave = game.wave;
+          game.retryAvailable = false;
+          game.isReplay = true;
+          game.replayGoldMulti = 0.5;
+          game.replayWasFailed = game.waveFailed;
+          ensurePlayerHasShip();
+          setupWave(game.selectedFarmWave);
+          game.replayReturnWave = savedWave;
+          game.state = 'PLAYING';
+          return;
+        }
+      }
+    } else {
+      const farmX = 10;
+      const farmY = H - 55;
+      const farmH = 42;
+      const maxShow = Math.min(game.highestCompletedWave, 8);
+      const wBtnW = Math.min(48, Math.floor((W / 2 - 30) / maxShow));
+      for (let i = 0; i < maxShow; i++) {
+        const waveNum = game.highestCompletedWave - maxShow + 1 + i;
+        if (waveNum < 1) continue;
+        const bx = farmX + i * (wBtnW + 4);
+        if (mx >= bx && mx <= bx + wBtnW && my >= farmY && my <= farmY + farmH) {
+          game.selectedFarmWave = waveNum;
+          return;
+        }
+      }
+      if (game.selectedFarmWave > 0) {
+        const goX = farmX + maxShow * (wBtnW + 4) + 4;
+        const goW = 60;
+        if (mx >= goX && mx <= goX + goW && my >= farmY && my <= farmY + farmH) {
+          const savedWave = game.wave;
+          game.retryAvailable = false;
+          game.isReplay = true;
+          game.replayGoldMulti = 0.5;
+          game.replayWasFailed = game.waveFailed;
+          ensurePlayerHasShip();
+          setupWave(game.selectedFarmWave);
+          game.replayReturnWave = savedWave;
+          game.state = 'PLAYING';
+          return;
+        }
       }
     }
   }
@@ -2788,15 +2969,27 @@ function handleShopClick(mx, my) {
   const contentY = 130;
 
   if (game.shopTab === 'buy') {
+    const bVL = isPortrait ? Math.floor((W - visW) / 2) : 0;
     const types = Object.keys(SHIP_TYPES);
     for (let i = 0; i < types.length; i++) {
       const type = types[i];
       const def = SHIP_TYPES[type];
-      const cardX = 80 + i * 190;
-      const cardY = contentY + 50;
+      let cardX, cardY, cardW;
+      if (isPortrait) {
+        cardW = Math.floor((visW - 15) / 2);
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        cardX = bVL + 5 + col * (cardW + 5);
+        cardY = contentY + 50 + row * 160;
+      } else {
+        cardX = 80 + i * 190;
+        cardY = contentY + 50;
+        cardW = 170;
+      }
 
       if (game.gold >= def.cost && game.escortShips.length < game.maxSlots) {
-        if (mx >= cardX + 20 && mx <= cardX + 150 && my >= cardY + 232 && my <= cardY + 254) {
+        const btnY = isPortrait ? cardY + 118 : cardY + 232;
+        if (mx >= cardX + 10 && mx <= cardX + cardW - 10 && my >= btnY && my <= btnY + 22) {
           game.gold -= def.cost;
           game.escortShips.push(new EscortShip(type));
           return;
@@ -2806,11 +2999,14 @@ function handleShopClick(mx, my) {
   }
 
   if (game.shopTab === 'upgrade') {
+    const uVL = isPortrait ? Math.floor((W - visW) / 2) : 0;
     // Ship selector
+    const shipBtnW = isPortrait ? 55 : 72;
+    const shipBtnH = isPortrait ? 40 : 50;
     for (let i = 0; i < game.escortShips.length; i++) {
-      const bx = W / 2 - (game.escortShips.length * 80) / 2 + i * 80;
+      const bx = W / 2 - (game.escortShips.length * (shipBtnW + 8)) / 2 + i * (shipBtnW + 8);
       const by = contentY + 30;
-      if (mx >= bx && mx <= bx + 72 && my >= by && my <= by + 50) {
+      if (mx >= bx && mx <= bx + shipBtnW && my >= by && my <= by + shipBtnH) {
         game.shopSelectedShip = i;
         return;
       }
@@ -2819,7 +3015,7 @@ function handleShopClick(mx, my) {
     if (game.shopSelectedShip >= 0 && game.shopSelectedShip < game.escortShips.length) {
       const ship = game.escortShips[game.shopSelectedShip];
       const upgradeTypes = Object.keys(UPGRADE_DEFS);
-      const uy = contentY + 100;
+      const uy = contentY + (isPortrait ? 85 : 100);
 
       for (let i = 0; i < upgradeTypes.length; i++) {
         const ut = upgradeTypes[i];
@@ -2829,21 +3025,48 @@ function handleShopClick(mx, my) {
         const cost = ship.getUpgradeCost(ut);
         if (game.gold < cost) continue;
 
-        const bx = 120 + i * 175;
-        const by = uy;
-        if (mx >= bx + 20 && mx <= bx + 140 && my >= by + 148 && my <= by + 170) {
-          game.gold -= ship.applyUpgrade(ut);
-          playSound('buy');
-          return;
+        let bx, by, bw;
+        if (isPortrait) {
+          bw = Math.floor((visW - 15) / 2);
+          const col = i % 2;
+          const row = Math.floor(i / 2);
+          bx = uVL + 5 + col * (bw + 5);
+          by = uy + row * 125;
+          const barY = by + 30;
+          const ubtnY = barY + 58;
+          if (mx >= bx + 10 && mx <= bx + bw - 10 && my >= ubtnY && my <= ubtnY + 20) {
+            game.gold -= ship.applyUpgrade(ut);
+            playSound('buy');
+            return;
+          }
+        } else {
+          bx = 120 + i * 175;
+          by = uy;
+          if (mx >= bx + 20 && mx <= bx + 140 && my >= by + 148 && my <= by + 170) {
+            game.gold -= ship.applyUpgrade(ut);
+            playSound('buy');
+            return;
+          }
         }
       }
 
       // Ammo clicks
-      const ammoY = uy + 200 + 10;
+      const ammoY = isPortrait ? uy + 255 + 10 : uy + 200 + 10;
       const ammoKeys = Object.keys(AMMO_TYPES);
       for (let i = 0; i < ammoKeys.length; i++) {
-        const abx = 120 + i * 230;
-        if (mx >= abx && mx <= abx + 210 && my >= ammoY && my <= ammoY + 45) {
+        let abx, aby, abw, abh;
+        if (isPortrait) {
+          abw = visW - 10;
+          abx = uVL + 5;
+          aby = ammoY + i * 40;
+          abh = 32;
+        } else {
+          abx = 120 + i * 230;
+          aby = ammoY;
+          abw = 210;
+          abh = 45;
+        }
+        if (mx >= abx && mx <= abx + abw && my >= aby && my <= aby + abh) {
           const at = AMMO_TYPES[ammoKeys[i]];
           const owned = ammoKeys[i] === 'standard' || ship['has_' + ammoKeys[i]];
           if (owned) {
@@ -2861,16 +3084,18 @@ function handleShopClick(mx, my) {
   }
 
   if (game.shopTab === 'slots') {
+    const sVL = isPortrait ? Math.floor((W - visW) / 2) : 0;
     for (let i = 0; i < SLOT_UPGRADES.length; i++) {
       const su = SLOT_UPGRADES[i];
-      const bx = W / 2 - 200;
+      const bx = isPortrait ? sVL + 5 : W / 2 - 200;
       const by = contentY + 60 + i * 55;
+      const bw = isPortrait ? visW - 10 : 400;
 
       const owned = game.maxSlots >= su.slot;
       const available = !owned && game.wave >= su.waveReq && game.gold >= su.cost;
 
       if (available) {
-        if (mx >= bx + 310 && mx <= bx + 400 && my >= by + 8 && my <= by + 36) {
+        if (mx >= bx + bw - 90 && mx <= bx + bw && my >= by + 8 && my <= by + 36) {
           game.gold -= su.cost;
           game.maxSlots = su.slot;
           return;
@@ -2880,12 +3105,14 @@ function handleShopClick(mx, my) {
   }
 
   if (game.shopTab === 'sell') {
+    const slVL = isPortrait ? Math.floor((W - visW) / 2) : 0;
     for (let i = 0; i < game.escortShips.length; i++) {
       const s = game.escortShips[i];
-      const bx = W / 2 - 200;
+      const bx = isPortrait ? slVL + 5 : W / 2 - 200;
       const by = contentY + 40 + i * 60;
+      const bw = isPortrait ? visW - 10 : 400;
 
-      if (mx >= bx + 320 && mx <= bx + 400 && my >= by + 10 && my <= by + 38) {
+      if (mx >= bx + bw - 80 && mx <= bx + bw && my >= by + 10 && my <= by + 38) {
         game.gold += s.getSellPrice();
         game.escortShips.splice(i, 1);
         return;
@@ -2894,6 +3121,7 @@ function handleShopClick(mx, my) {
   }
 
   if (game.shopTab === 'missiles') {
+    const mVL = isPortrait ? Math.floor((W - visW) / 2) : 0;
     const costs = [
       { amount: 1, cost: 50 },
       { amount: 3, cost: 120 },
@@ -2901,12 +3129,13 @@ function handleShopClick(mx, my) {
     ];
     for (let i = 0; i < costs.length; i++) {
       const c = costs[i];
-      const bx = W / 2 - 150;
+      const bx = isPortrait ? mVL + 5 : W / 2 - 150;
       const by = contentY + 80 + i * 55;
+      const bw = isPortrait ? visW - 10 : 300;
 
       const canBuy = game.gold >= c.cost && game.interceptorMissiles + c.amount <= 10;
       if (canBuy) {
-        if (mx >= bx + 220 && mx <= bx + 300 && my >= by + 8 && my <= by + 36) {
+        if (mx >= bx + bw - 80 && mx <= bx + bw && my >= by + 8 && my <= by + 36) {
           game.gold -= c.cost;
           game.interceptorMissiles += c.amount;
           return;
@@ -2916,11 +3145,12 @@ function handleShopClick(mx, my) {
   }
 
   if (game.shopTab === 'market') {
+    const mkVL = isPortrait ? Math.floor((W - visW) / 2) : 0;
     for (let i = 0; i < game.blackMarketOffers.length; i++) {
       const o = game.blackMarketOffers[i];
-      const bx = W / 2 - 200;
+      const bx = isPortrait ? mkVL + 5 : W / 2 - 200;
       const by = contentY + 50 + i * 65;
-      const bw = 400;
+      const bw = isPortrait ? visW - 10 : 400;
       if (game.gold >= o.cost) {
         if (mx >= bx + bw - 80 && mx <= bx + bw - 10 && my >= by + 12 && my <= by + 40) {
           game.gold -= o.cost;
@@ -2935,13 +3165,14 @@ function handleShopClick(mx, my) {
 
 // ============== GAME CLICK ==============
 function handleGameClick(mx, my) {
-  // Skill buttons (tap on mobile) - match drawHUD sizes
-  const skBtnW = isMobile ? 160 : 120;
-  const skBtnH = isMobile ? 50 : 30;
-  const skBarY = H - (isMobile ? 58 : 40);
-  const skGap = isMobile ? 170 : 130;
+  // Skill buttons - match drawHUD sizes
+  const vL = isPortrait ? Math.floor((W - visW) / 2) : 0;
   const skillKeys = Object.keys(SKILLS);
-  const skStartX = isMobile ? Math.floor((W - skillKeys.length * skGap) / 2) : 10;
+  const skBtnW = isPortrait ? Math.floor((visW - 20) / skillKeys.length - 5) : 120;
+  const skBtnH = 30;
+  const skBarY = H - (isPortrait ? 38 : 40);
+  const skGap = skBtnW + 5;
+  const skStartX = isPortrait ? vL + 5 : 10;
   for (let i = 0; i < skillKeys.length; i++) {
     const bx = skStartX + i * skGap;
     if (mx >= bx && mx <= bx + skBtnW && my >= skBarY && my <= skBarY + skBtnH) {
@@ -2981,47 +3212,44 @@ function handleGameClick(mx, my) {
 // ============== MENU ==============
 function drawMenu() {
   drawOcean();
-
-  // Title
   ctx.fillStyle = 'rgba(0,0,0,0.7)';
   ctx.fillRect(0, 0, W, H);
 
+  const cx = W / 2;
+
   ctx.fillStyle = '#ffffff';
-  ctx.font = isMobile ? 'bold 56px Segoe UI' : 'bold 48px Segoe UI';
+  ctx.font = 'bold 48px Segoe UI';
   ctx.textAlign = 'center';
-  ctx.fillText('HORMUZ WAR', W / 2, 180);
+  ctx.fillText('HORMUZ WAR', cx, 180);
 
   ctx.fillStyle = '#88bbdd';
-  ctx.font = isMobile ? '24px Segoe UI' : '20px Segoe UI';
-  ctx.fillText('Naval Escort Commander', W / 2, 220);
+  ctx.font = '20px Segoe UI';
+  ctx.fillText('Naval Escort Commander', cx, 220);
 
   ctx.fillStyle = '#aaaaaa';
-  ctx.font = isMobile ? '17px Segoe UI' : '14px Segoe UI';
-  const lineH = isMobile ? 30 : 25;
-  const startTextY = isMobile ? 270 : 280;
-  ctx.fillText('Protect the convoy through the Strait of Hormuz', W / 2, startTextY);
-  ctx.fillText('Your escort ships fight automatically in formation', W / 2, startTextY + lineH);
-  ctx.fillText('Tap to intercept incoming missiles', W / 2, startTextY + lineH * 2);
-  ctx.fillText('Tap skill buttons for special abilities', W / 2, startTextY + lineH * 3);
-  ctx.fillText('Weather changes each wave | Earn achievements', W / 2, startTextY + lineH * 4);
+  ctx.font = '14px Segoe UI';
+  ctx.fillText('Protect the convoy through the Strait of Hormuz', cx, 280);
+  ctx.fillText('Your escort ships fight automatically in formation', cx, 305);
+  ctx.fillText('Tap to intercept incoming missiles', cx, 330);
+  ctx.fillText('Tap skill buttons for special abilities', cx, 355);
+  ctx.fillText('Weather changes each wave | Earn achievements', cx, 380);
 
-  // Start button - larger on mobile
-  const btnW = isMobile ? 260 : 200;
-  const btnH = isMobile ? 60 : 50;
-  const btnX = W / 2 - btnW / 2;
-  const btnY = isMobile ? 450 : 440;
+  // Start button
+  const btnW = 200, btnH = 50;
+  const btnX = cx - btnW / 2;
+  const btnY = 440;
   ctx.fillStyle = '#1a4a2a';
   ctx.fillRect(btnX, btnY, btnW, btnH);
   ctx.strokeStyle = '#44ff66';
   ctx.lineWidth = 2;
   ctx.strokeRect(btnX, btnY, btnW, btnH);
   ctx.fillStyle = '#ffffff';
-  ctx.font = isMobile ? 'bold 26px Segoe UI' : 'bold 20px Segoe UI';
-  ctx.fillText('START GAME', W / 2, btnY + btnH * 0.65);
+  ctx.font = 'bold 20px Segoe UI';
+  ctx.fillText('START GAME', cx, btnY + btnH * 0.65);
 
   ctx.fillStyle = '#666666';
   ctx.font = '12px Segoe UI';
-  ctx.fillText('v2.0 - Enhanced Edition', W / 2, H - 20);
+  ctx.fillText('v2.0 - Enhanced Edition', cx, H - 20);
 }
 
 // ============== LEADERBOARD (GOOGLE SHEETS) ==============
@@ -3125,12 +3353,11 @@ canvas.addEventListener('click', e => {
 
   initAudio();
   if (game.state === 'MENU') {
-    const btnW = isMobile ? 260 : 200;
-    const btnH = isMobile ? 60 : 50;
-    const btnX = W / 2 - btnW / 2;
-    const btnY = isMobile ? 450 : 440;
+    const cx = W / 2;
+    const btnW = 200, btnH = 50;
+    const btnX = cx - btnW / 2;
+    const btnY = 440;
     if (mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + btnH) {
-      if (isMobile) requestFullscreen();
       startNewGame();
     }
   } else if (game.state === 'PLAYING') {
@@ -3257,7 +3484,7 @@ function gameLoop(timestamp) {
     for (const ft of game.floatingTexts) {
       ctx.globalAlpha = Math.min(1, ft.life);
       ctx.fillStyle = ft.color;
-      ctx.font = isMobile ? 'bold 18px Segoe UI' : 'bold 13px Segoe UI';
+      ctx.font = 'bold 13px Segoe UI';
       ctx.textAlign = 'center';
       ctx.fillText(ft.text, ft.x, ft.y);
     }
@@ -3273,8 +3500,9 @@ function gameLoop(timestamp) {
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
       ctx.fillRect(0, 0, W, H);
       // Central panel
+      const pcx = W / 2;
       const panelW = 400, panelH = 140;
-      const panelX = W / 2 - panelW / 2, panelY = H / 2 - panelH / 2;
+      const panelX = pcx - panelW / 2, panelY = H / 2 - panelH / 2;
       ctx.fillStyle = 'rgba(10,15,30,0.9)';
       ctx.fillRect(panelX, panelY, panelW, panelH);
       ctx.strokeStyle = game.waveFailed ? '#ff4444' : '#44ff66';
@@ -3284,59 +3512,60 @@ function gameLoop(timestamp) {
       ctx.fillStyle = game.waveFailed ? '#ff4444' : '#44ff66';
       ctx.font = 'bold 32px Segoe UI';
       ctx.textAlign = 'center';
-      ctx.fillText(game.waveFailed ? 'WAVE FAILED' : 'WAVE COMPLETE!', W / 2, panelY + 40);
+      ctx.fillText(game.waveFailed ? 'WAVE FAILED' : 'WAVE COMPLETE!', pcx, panelY + 40);
       // Gold earned
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 18px Segoe UI';
-      ctx.fillText('Gold Earned: ' + game.waveGoldEarned, W / 2, panelY + 75);
+      ctx.fillText('Gold Earned: ' + game.waveGoldEarned, pcx, panelY + 75);
       // Convoy survived or fail message
       if (!game.waveFailed) {
         ctx.fillStyle = '#88ddff';
         ctx.font = '16px Segoe UI';
-        ctx.fillText('Convoy Survived: ' + game.survivedConvoy + '/' + game.totalConvoy, W / 2, panelY + 105);
+        ctx.fillText('Convoy Survived: ' + game.survivedConvoy + '/' + game.totalConvoy, pcx, panelY + 105);
       } else if (game.isReplay) {
         ctx.fillStyle = '#88bbff';
         ctx.font = '14px Segoe UI';
-        ctx.fillText('No penalty - replay wave', W / 2, panelY + 105);
+        ctx.fillText('No penalty - replay wave', pcx, panelY + 105);
       } else {
         ctx.fillStyle = '#ff8844';
         ctx.font = '14px Segoe UI';
-        ctx.fillText('Lives remaining: ' + (game.maxFails - game.failedWaves), W / 2, panelY + 105);
+        ctx.fillText('Lives remaining: ' + (game.maxFails - game.failedWaves), pcx, panelY + 105);
       }
       ctx.globalAlpha = 1;
     } else if (game.notification && game.notificationTimer > 0) {
-      // Non-wave notifications (skills, etc.)
+      const ncx = W / 2;
       const alpha = Math.min(1, game.notificationTimer);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(W / 2 - 220, H / 2 - 22, 440, 44);
+      ctx.fillRect(ncx - 220, H / 2 - 22, 440, 44);
       ctx.strokeStyle = '#44aaff';
       ctx.lineWidth = 2;
-      ctx.strokeRect(W / 2 - 220, H / 2 - 22, 440, 44);
+      ctx.strokeRect(ncx - 220, H / 2 - 22, 440, 44);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 16px Segoe UI';
       ctx.textAlign = 'center';
-      ctx.fillText(game.notification, W / 2, H / 2 + 6);
+      ctx.fillText(game.notification, ncx, H / 2 + 6);
       ctx.globalAlpha = 1;
     }
 
     // Achievement popup
     if (game.achievementPopup && game.achievementPopupTimer > 0) {
       const ap = game.achievementPopup;
+      const acx = W / 2;
       const alpha = Math.min(1, game.achievementPopupTimer);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = 'rgba(40,30,0,0.85)';
-      ctx.fillRect(W / 2 - 160, 50, 320, 50);
+      ctx.fillRect(acx - 160, 50, 320, 50);
       ctx.strokeStyle = '#ffd700';
       ctx.lineWidth = 2;
-      ctx.strokeRect(W / 2 - 160, 50, 320, 50);
+      ctx.strokeRect(acx - 160, 50, 320, 50);
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 13px Segoe UI';
       ctx.textAlign = 'center';
-      ctx.fillText('ACHIEVEMENT: ' + ap.name, W / 2, 72);
+      ctx.fillText('ACHIEVEMENT: ' + ap.name, acx, 72);
       ctx.fillStyle = '#ffffff';
       ctx.font = '11px Segoe UI';
-      ctx.fillText(ap.desc + ' (+' + ap.reward + 'g)', W / 2, 90);
+      ctx.fillText(ap.desc + ' (+' + ap.reward + 'g)', acx, 90);
       ctx.globalAlpha = 1;
     }
 
