@@ -11,7 +11,8 @@ interface Props {
 
 const isMobileDevice = () =>
   /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent) ||
-  (navigator.maxTouchPoints > 1 && window.innerWidth < 1024)
+  ('ontouchstart' in window) ||
+  (navigator.maxTouchPoints > 0 && window.innerWidth < 1024)
 
 export function ExportButton({ rendererRef, getTexturesByIndex }: Props) {
   const images    = useStore((s) => s.images)
