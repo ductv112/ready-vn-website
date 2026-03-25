@@ -5,7 +5,9 @@ import { Timeline } from '@/components/timeline/Timeline'
 import { EffectSelector } from '@/components/controls/EffectSelector'
 import { useStore } from '@/store/useStore'
 
-export function LeftPanel() {
+interface Props { isMobile?: boolean }
+
+export function LeftPanel({ isMobile = false }: Props) {
   const isRendering = useStore((s) =>
     s.exportState.status === 'capturing' || s.exportState.status === 'encoding'
   )
@@ -13,13 +15,17 @@ export function LeftPanel() {
   return (
     <div
       className="h-full flex flex-col bg-studio-panel border-r border-studio-border overflow-hidden relative"
-      style={{ width: '40%', minWidth: '320px', maxWidth: '480px' }}
+      style={isMobile
+        ? { width: '100%' }
+        : { width: '40%', minWidth: '320px', maxWidth: '480px' }}
     >
       {/* Panel header */}
       <div className="flex-shrink-0 px-4 py-3.5 border-b border-studio-border flex items-center gap-2.5">
         <div className="w-1 h-4 rounded bg-gradient-gold" />
         <span className="text-xs font-semibold tracking-wide text-ink-primary">Studio</span>
-        <span className="text-2xs font-mono text-ink-disabled ml-auto">40% ← → 60%</span>
+        {!isMobile && (
+          <span className="text-2xs font-mono text-ink-disabled ml-auto">40% ← → 60%</span>
+        )}
       </div>
 
       {/* Scrollable content */}

@@ -25,7 +25,10 @@ export function PreviewCanvas() {
   const isEmpty = images.length === 0
   const isDone  = exportState.status === 'done' && !!renderedBlob
   const isError = exportState.status === 'error'
-  const canRender = images.length > 0 && !isRendering
+
+  const isMobile = ('ontouchstart' in window) ||
+    (navigator.maxTouchPoints > 0 && window.innerWidth < 1024)
+  const canRender = images.length > 0 && !isRendering && !isMobile
 
   const handleRender = async () => {
     if (!rendererRef.current) return
@@ -33,10 +36,16 @@ export function PreviewCanvas() {
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100%', overflow: 'hidden' }}>
 
-      {/* ── Left: Canvas / Video Player (centered) ─────────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden min-h-0 min-w-0">
+      {/* ── Canvas / Video Player ───────────────────────────────────────── */}
+      <div style={{
+        flex: isMobile ? '0 0 auto' : 1,
+        height: isMobile ? '55%' : '100%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: isMobile ? '8px' : '16px',
+        overflow: 'hidden', minHeight: 0, minWidth: 0,
+      }}>
         {/* Wrapper giữ aspect ratio 9:16 */}
         <div
           className="canvas-wrapper"
@@ -118,8 +127,17 @@ export function PreviewCanvas() {
         </div>
       </div>
 
-      {/* ── Right: Controls Sidebar ─────────────────────────────────────── */}
-      <div className="w-64 flex-shrink-0 border-l border-studio-border flex flex-col overflow-y-auto bg-studio-panel">
+      {/* ── Controls (sidebar on desktop, strip below on mobile) ────────── */}
+      <div style={{
+        width: isMobile ? '100%' : '256px',
+        flex: isMobile ? '1 1 auto' : undefined,
+        flexShrink: isMobile ? undefined : 0,
+        borderLeft: isMobile ? 'none' : undefined,
+        borderTop: isMobile ? '1px solid #1e1e2e' : undefined,
+        display: 'flex', flexDirection: 'column',
+        overflowY: 'auto',
+        background: '#0f0f18',
+      }}>
 
         {/* Export Settings */}
         <section className="px-4 py-4 border-b border-studio-border flex flex-col gap-3">
@@ -250,6 +268,13 @@ export function PreviewCanvas() {
                 </>
               )}
             </button>
+          )}
+
+          {/* Mobile warning */}
+          {isMobile && !isRendering && (
+            <p className="text-center text-xs text-ink-muted">
+              ⚠ Chỉ dành cho máy tính
+            </p>
           )}
 
           {/* ── Download (chỉ hiện khi done) ── */}
