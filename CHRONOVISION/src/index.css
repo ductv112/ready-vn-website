@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base Reset ─── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: #08080e;
+    color: #f1f1f8;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar — studio aesthetic */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f0f18;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2a2a3d;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #f0a500;
+  }
+
+  /* Remove default focus outlines, add custom */
+  *:focus-visible {
+    outline: 2px solid rgba(240, 165, 0, 0.6);
+    outline-offset: 2px;
+  }
+}
+
+/* ─── Component Utilities ─── */
+@layer components {
+  /* Reusable card surface */
+  .card-studio {
+    @apply bg-studio-card border border-studio-border rounded-studio-lg shadow-studio-sm;
+  }
+
+  /* Subtle inset top highlight */
+  .inset-highlight {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Gold accent button */
+  .btn-gold {
+    @apply bg-gradient-gold text-studio-bg font-semibold rounded-studio
+           shadow-gold-sm transition-all duration-200
+           hover:shadow-gold hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply bg-transparent border border-studio-border text-ink-secondary font-medium rounded-studio
+           transition-all duration-200
+           hover:border-ink-secondary hover:text-ink-primary hover:bg-studio-hover;
+  }
+
+  /* Section label */
+  .section-label {
+    @apply text-2xs font-semibold tracking-widest uppercase text-ink-muted;
+  }
+
+  /* Input field */
+  .input-studio {
+    @apply bg-studio-input border border-studio-border rounded-studio
+           text-ink-primary placeholder-ink-disabled
+           focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30
+           transition-colors duration-200;
+  }
+
+  /* Drag-over drop zone */
+  .drop-zone {
+    @apply border-2 border-dashed border-studio-border rounded-studio-lg
+           transition-all duration-200;
+  }
+  .drop-zone.drag-over {
+    @apply border-accent-gold bg-accent-gold-glow;
+  }
+
+  /* Thumbnail item */
+  .thumbnail-item {
+    @apply relative aspect-[9/16] rounded-studio overflow-hidden bg-studio-elevated
+           border border-studio-border cursor-grab active:cursor-grabbing
+           transition-all duration-200 hover:border-accent-gold/50;
+  }
+  .thumbnail-item.selected {
+    @apply border-accent-gold shadow-gold-sm;
+  }
+  .thumbnail-item.dragging {
+    @apply opacity-40 scale-95;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply h-0.5 bg-studio-border rounded-full overflow-hidden;
+  }
+  .progress-bar-fill {
+    @apply h-full bg-gradient-gold rounded-full transition-all duration-75;
+  }
+
+  /* Canvas container — preserves 9:16 ratio */
+  .canvas-wrapper {
+    aspect-ratio: 9 / 16;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.7);
+  }
+}
+
+/* ─── Custom Utilities ─── */
+@layer utilities {
+  /* Shimmer skeleton */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      #16161f 25%,
+      #1e1e2a 50%,
+      #16161f 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite linear;
+  }
+
+  /* Text gradient */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #f0a500, #ffd166);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow border effect */
+  .border-glow-gold {
+    box-shadow: 0 0 0 1px rgba(240, 165, 0, 0.4), 0 0 12px rgba(240, 165, 0, 0.1);
+  }
+
+  /* No select */
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}

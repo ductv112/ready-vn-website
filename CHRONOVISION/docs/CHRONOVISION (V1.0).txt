@@ -1,0 +1,74 @@
+TÀI LIỆU THIẾT KẾ DỰ ÁN: CHRONOVISION (V1.0)
+Mục tiêu: Xây dựng Web App cho phép người dùng upload chuỗi hình ảnh, tự động tạo hiệu ứng chuyển cảnh thị giác mạnh (Morphing/Infinite Zoom) khớp với âm nhạc, và xuất ra video dọc.
+
+1. Kiến trúc hệ thống (Architecture & Tech Stack)
+Để không tốn chi phí server xử lý video, toàn bộ quá trình render sẽ diễn ra trên trình duyệt của người dùng.
+
+- Frontend Framework: React.js (dùng Vite để build cho nhanh).
+
+- UI/Styling: Tailwind CSS (giao diện dark mode, phong cách studio chuyên nghiệp).
+
+- Graphics/Animation Engine: GSAP (GreenSock) kết hợp Three.js để xử lý hiệu ứng không gian 3D, chiều sâu (parallax) và chuyển cảnh mượt mà trên thẻ <canvas>.
+
+- Video Export Engine: FFmpeg.wasm (Chạy FFmpeg trực tiếp trên trình duyệt bằng WebAssembly) để ghép các frame từ canvas cùng với file audio thành file .mp4.
+
+2. Phân tích Nghiệp vụ - Luồng Người Dùng (User Flow)
+Ví dụ luồng chạy thực tế: Người dùng upload chuỗi 24 bức ảnh độ phân giải cao theo chủ đề "The Ascent of Man" (tiến trình từ thời tiền sử đến tương lai viễn tưởng sci-fi), sau đó tải lên một track nhạc background có âm hưởng Metal Rock dồn dập.
+
+Hệ thống sẽ hoạt động theo các bước:
+
+- Input: Kéo thả 24 file ảnh (JPG/PNG) và 1 file âm thanh (MP3/WAV).
+
+- Sắp xếp (Timeline): Kéo thả để thay đổi thứ tự ảnh. Cài đặt thời gian hiển thị cho mỗi bức ảnh (ví dụ: 1.5 giây/ảnh để khớp với nhịp trống).
+
+- Cấu hình hiệu ứng: Chọn loại hiệu ứng chuyển cảnh (Crossfade, Infinite Zoom, hoặc 3D Distortion).
+
+- Preview: Nhấn nút Play để xem trước hiệu ứng và nghe nhạc trực tiếp trên trình duyệt.
+
+- Render & Export: Nhấn "Export Video". Hệ thống đóng gói thành file MP4 và tự động tải xuống máy.
+
+3. Yêu cầu Chức năng Chi tiết (Functional Requirements)
+Module 1: Quản lý Asset (Đầu vào)
+
+- Trình upload hỗ trợ chọn nhiều file ảnh cùng lúc.
+
+- Tự động crop hoặc scale ảnh đầu vào để lấp đầy khung hình (Object-fit: cover).
+
+- Định dạng khung hình đầu ra (Bắt buộc): Mặc định set cứng tỷ lệ Video Dọc (Vertical 9:16 - độ phân giải 1080x1920) để tối ưu việc đăng ngay lên YouTube Shorts hoặc TikTok mà không cần chỉnh sửa lại.
+
+- Trình upload 1 file Audio duy nhất làm nhạc nền.
+
+Module 2: Xử lý Đồ họa (Canvas Engine)
+
+- Vẽ hình ảnh lên <canvas> của HTML5.
+
+- Áp dụng WebGL shaders (thông qua Three.js) để tạo hiệu ứng:
+
+	* Hiệu ứng Zoom In liên tục: Tạo cảm giác người xem đang bay xuyên qua các bức ảnh.
+
+	* Hiệu ứng Morphing/Dissolve: Chuyển đổi mượt mà giữa các mốc thời gian.
+
+Module 3: Đồng bộ Âm thanh & Render (Video Builder)
+
+- Trích xuất (capture) từng khung hình (frame) từ <canvas> với tốc độ 30 FPS hoặc 60 FPS.
+
+- Gửi các frame hình ảnh dạng Blob vào bộ nhớ của FFmpeg.wasm.
+
+- Dùng lệnh FFmpeg ảo để ghép chuỗi frame lại với nhau, sau đó mix (trộn) file Audio vào luồng video.
+
+- Xuất ra định dạng chuẩn H.264 (MP4).
+
+4. Giao diện Người dùng (UI/UX Layout)
+Chia màn hình làm 2 phần chính (Split View):
+
+- Cột trái (Settings & Timeline - 40% width): * Nút Upload Ảnh / Upload Nhạc.
+
+	* Danh sách ảnh dạng lưới nhỏ (Thumbnail) có thể kéo thả (Drag & Drop) để đổi vị trí.
+
+	* Dropdown chọn hiệu ứng.
+
+	* Nút "Export MP4".
+
+- Cột phải (Preview Canvas - 60% width): * Khung xem trước (Preview) tỷ lệ 9:16 nằm ở chính giữa, viền bo góc, nền tối.
+
+	*Các nút điều khiển: Play, Pause, Tua lại.
